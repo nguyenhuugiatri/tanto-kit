@@ -10,6 +10,7 @@ import { useTanto } from '../../../hooks/useTanto';
 import { useWidget } from '../../../hooks/useWidget';
 import { Route } from '../../../types/route';
 import { Wallet } from '../../../types/wallet';
+import { isInjectedConnector, isWCConnector } from '../../../utils';
 
 interface WalletItemProps {
   wallet: Wallet;
@@ -68,7 +69,7 @@ export const WalletItem = ({ wallet }: WalletItemProps) => {
   const isMobile = useIsMobileView();
 
   const walletLogo = iconOnList ?? icon;
-  const isInjected = connector?.type === 'injected';
+  const isInjected = isInjectedConnector(connector?.type);
   const highlightContent = highlightOnList ? (isMobile ? 'Fastest' : 'Fastest to start') : undefined;
 
   const handleClick = useCallback(() => {
@@ -77,7 +78,7 @@ export const WalletItem = ({ wallet }: WalletItemProps) => {
       return;
     }
     setWallet(wallet);
-    goTo(id === 'walletConnect' ? Route.CONNECT_WC : Route.CONNECT_INJECTOR, { title: name });
+    goTo(isWCConnector(id) ? Route.CONNECT_WC : Route.CONNECT_INJECTOR, { title: name });
   }, [wallet, setWallet, goTo, isInstalled, downloadUrl, id, name]);
 
   const handleKeyDown = useCallback(

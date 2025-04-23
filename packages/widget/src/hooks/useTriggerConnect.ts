@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 import { Connector, useConnect, UseConnectReturnType } from 'wagmi';
 
 import { CONNECT_STATES } from '../types';
-import { isMobile } from '../utils';
+import { isMobile, isWCConnector } from '../utils';
 
 const normalizeConnectStatus = (status: UseConnectReturnType['status'], connector: Connector | null) => {
   switch (status) {
     case 'idle':
     case 'pending':
-      if (connector?.id === 'walletConnect' && isMobile()) return CONNECT_STATES.OPENING_WALLET;
+      if (isWCConnector(connector?.id) && isMobile()) return CONNECT_STATES.OPENING_WALLET;
       return CONNECT_STATES.PENDING;
     case 'success':
       return CONNECT_STATES.SUCCESS;

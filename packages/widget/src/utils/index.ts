@@ -1,9 +1,8 @@
 import { detect } from 'detect-browser';
 import { formatUnits } from 'viem';
-import { Connector, CreateConnectorFn, UseConnectReturnType } from 'wagmi';
+import { Connector, CreateConnectorFn } from 'wagmi';
 
 import { WEB_WALLET_LINK } from '../constants';
-import { CONNECT_STATES } from '../types';
 
 export const notEmpty = <T>(value: T): value is NonNullable<T> => typeof value !== 'undefined' && value !== null;
 
@@ -40,6 +39,10 @@ export const isMobile = () => {
 };
 
 export const isDesktop = () => !isMobile();
+
+export const isWCConnector = (connectorId?: string) => connectorId === 'walletConnect';
+
+export const isInjectedConnector = (connectorType?: string) => connectorType === 'injected';
 
 export const generateInAppBrowserRoninMobileLink = (uri: string) => {
   return `roninwallet://in_app_browser?url=${encodeURIComponent(uri)}`;
