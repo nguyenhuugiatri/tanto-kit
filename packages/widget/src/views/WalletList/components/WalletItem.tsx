@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { highlightedWalletItemBackgroundUri } from '../../../assets/data-uris';
 import { Badge } from '../../../components/badge/Badge';
 import { Box } from '../../../components/box/Box';
+import { WALLET_ITEM_HEIGHT } from '../../../constants';
 import { useIsMobileView } from '../../../hooks/useIsMobileView';
 import { useTanto } from '../../../hooks/useTanto';
 import { useWidget } from '../../../hooks/useWidget';
@@ -21,7 +22,7 @@ const Container = styled('div', {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    height: 68,
+    minHeight: WALLET_ITEM_HEIGHT,
     gap: 12,
     padding: 16,
     backgroundColor: 'rgba(205, 213, 229, 0.07)',
@@ -30,7 +31,7 @@ const Container = styled('div', {
   },
   ({ highlight }) =>
     highlight && {
-      backgroundImage: `url(${highlightedWalletItemBackgroundUri})`,
+      backgroundImage: `url("${highlightedWalletItemBackgroundUri}")`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
