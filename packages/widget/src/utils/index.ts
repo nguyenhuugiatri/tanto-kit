@@ -1,8 +1,9 @@
 import { detect } from 'detect-browser';
 import { formatUnits } from 'viem';
-import { Connector, CreateConnectorFn } from 'wagmi';
+import { Connector, CreateConnectorFn, UseConnectReturnType } from 'wagmi';
 
 import { WEB_WALLET_LINK } from '../constants';
+import { CONNECT_STATES } from '../types';
 
 export const notEmpty = <T>(value: T): value is NonNullable<T> => typeof value !== 'undefined' && value !== null;
 
