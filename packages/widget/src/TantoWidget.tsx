@@ -21,9 +21,9 @@ const views = {
 
 export function TantoWidget() {
   const { view, open, setOpen, hide, goBack, reset } = useWidget();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chainId } = useAccount();
 
-  useBalance({ address });
+  useBalance({ address, chainId });
   useAccountEffect({
     onConnect() {
       setTimeout(hide, CONNECT_WIDGET_HIDE_DELAY);
