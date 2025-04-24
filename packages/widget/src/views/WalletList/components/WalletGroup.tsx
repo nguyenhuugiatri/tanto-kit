@@ -22,7 +22,7 @@ const Container = styled.div({
 
 export const WalletGroup = ({ wallets, className }: WalletGroupProps) => {
   return (
-    <Container className={className}>
+    <Container data-scrollable className={className}>
       {wallets.map(wallet => (
         <WalletItem key={wallet.id} wallet={wallet} />
       ))}
