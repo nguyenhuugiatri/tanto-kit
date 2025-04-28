@@ -11,7 +11,7 @@ interface WCQRCodeProps {
 }
 
 const SIZE = 236;
-const TRANSITION = { duration: 0.35 };
+const TRANSITION = { duration: 0.4 };
 
 const Container = styled.div({
   position: 'relative',

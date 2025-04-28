@@ -1,8 +1,8 @@
 import { AnimatePresence, AnimationProps } from 'motion/react';
 import * as m from 'motion/react-m';
-import { ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 
-type AppearContainerProps = AnimationProps & {
+type FadeProps = AnimationProps & {
   children: ReactNode;
   show: boolean;
 };
@@ -14,7 +14,7 @@ const defaultProps: AnimationProps = {
   transition: { duration: 0.2 },
 };
 
-export function AppearContainer({ children, initial, animate, exit, transition, show }: AppearContainerProps) {
+export const Fade = memo(({ children, initial, animate, exit, transition, show }: FadeProps) => {
   return (
     <AnimatePresence>
       {show && (
@@ -29,4 +29,4 @@ export function AppearContainer({ children, initial, animate, exit, transition, 
       )}
     </AnimatePresence>
   );
-}
+});

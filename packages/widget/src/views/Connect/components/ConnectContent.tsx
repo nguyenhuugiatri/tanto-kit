@@ -1,10 +1,10 @@
 import styled from '@emotion/styled';
 import { memo, useMemo } from 'react';
 
-import { AppearContainer } from '../../../components/appear-container/AppearContainer';
+import { Fade } from '../../../components/animated-containers/Fade';
+import { TransitionedView } from '../../../components/animated-containers/TransitionedView';
 import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
-import { TransitionContainer } from '../../../components/transition-container/TransitionContainer';
 import { CONNECT_STATES, ConnectState } from '../../../types';
 import { generateRoninMobileWCLink } from '../../../utils';
 
@@ -76,11 +76,11 @@ const ActionButton = memo<{
 
   if (status === CONNECT_STATES.OPENING_WALLET && wcUri) {
     return (
-      <AppearContainer show initial={{ opacity: 0, scale: 0.85 }}>
+      <Fade show initial={{ opacity: 0, scale: 0.85 }}>
         <a href={generateRoninMobileWCLink(wcUri)}>
           <Button fullWidth>Open {walletName}</Button>
         </a>
-      </AppearContainer>
+      </Fade>
     );
   }
 
@@ -96,11 +96,11 @@ interface ConnectContentProps {
 
 export const ConnectContent = memo(({ walletName, status, wcUri, onRetry }: ConnectContentProps) => {
   return (
-    <TransitionContainer viewKey={status}>
+    <TransitionedView viewKey={status}>
       <Box fullWidth vertical gap={32}>
         <StatusContent status={status} walletName={walletName} wcUri={wcUri} />
         <ActionButton status={status} walletName={walletName} wcUri={wcUri} onRetry={onRetry} />
       </Box>
-    </TransitionContainer>
+    </TransitionedView>
   );
 });

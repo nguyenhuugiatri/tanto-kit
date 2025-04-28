@@ -17,7 +17,7 @@ export const walletConfigs: {
     iconOnList: <RoninWaypointCustomLogo />,
   },
   'RONIN_WALLET, com.roninchain.wallet': {
-    name: 'Ronin Extension',
+    name: 'Ronin Wallet Extension',
     icon: <RoninExtensionCustomSquareLogo />,
     iconOnList: <RoninExtensionCustomLogo />,
     downloadUrl: WEB_WALLET_LINK,

@@ -12,6 +12,6 @@ export interface WalletConfig {
 }
 
 export type Wallet = WalletConfig & {
-  connector: Connector | null;
+  connector?: Connector;
   isInstalled?: boolean;
 };

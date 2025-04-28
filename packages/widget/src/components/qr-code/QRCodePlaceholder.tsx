@@ -47,7 +47,7 @@ const Dots = styled.div({
     backgroundSize: '200% 100%',
     backgroundImage: 'linear-gradient(90deg, transparent 50%, rgba(255, 255, 255, 0.9), transparent)',
     willChange: 'background-position',
-    animation: `${shine} 1100ms linear infinite both`,
+    animation: `${shine} 1150ms linear infinite both`,
     animationDelay: `${DELAY_CONNECT}ms`,
   },
 });
