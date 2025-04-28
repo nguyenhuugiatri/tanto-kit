@@ -1,8 +1,6 @@
-export type ThemeMode = 'light' | 'dark';
-
 export interface WidgetTheme {
   /* ------------------ INFO ----------------- */
-  name: ThemeMode;
+  name: string;
   /* ------------------ GENERAL ----------------- */
   fontFamily: string;
   textColor: string;

@@ -1,18 +1,17 @@
-import { css, Global, ThemeProvider as EmotionThemeProvider } from '@emotion/react';
+import { type Theme, css, Global, ThemeProvider as EmotionThemeProvider } from '@emotion/react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import { dark, light } from '../../styles/theme';
-import type { ThemeMode } from '../../types/theme';
+import { tantoDark } from '../../styles/theme';
 
 interface ThemeProviderProps {
   children: ReactNode;
-  theme?: ThemeMode;
+  theme?: Theme;
 }
 
 export function ThemeProvider(props: ThemeProviderProps) {
-  const { children, theme: initialTheme = 'dark' } = props;
-  const [theme] = useState(initialTheme === 'light' ? light : dark);
+  const { children, theme: initialTheme = tantoDark } = props;
+  const [theme] = useState(initialTheme);
 
   return (
     <EmotionThemeProvider theme={theme}>

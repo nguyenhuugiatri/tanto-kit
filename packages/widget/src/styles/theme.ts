@@ -1,11 +1,11 @@
 import type { Theme } from '@emotion/react';
 
-export const dark: Theme = {
+export const tantoDark: Theme = {
   /* ------------------ INFO ----------------- */
-  name: 'dark',
+  name: 'tanto-dark',
 
   /* ------------------ GENERAL ----------------- */
-  fontFamily: "'Work Sans', sans-serif, 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial",
+  fontFamily: "'Work Sans', 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   textColor: '#fff',
   neutralTextColor: 'rgba(205, 213, 229, 0.75)',
   linkTextColor: '#5294F8',
@@ -89,10 +89,10 @@ export const dark: Theme = {
 
 export const light: Theme = {
   /* ------------------ INFO ----------------- */
-  name: 'light',
+  name: 'tanto-light',
 
   /* ------------------ GENERAL ----------------- */
-  fontFamily: "'Work Sans', sans-serif, 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial",
+  fontFamily: "'Work Sans', 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
   textColor: '#000',
   neutralTextColor: 'rgba(0, 0, 0, 0.75)',
   linkTextColor: '#1D4ED8',

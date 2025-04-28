@@ -13,7 +13,7 @@ const WagmiExample: FC = () => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <TantoProvider theme="dark">
+        <TantoProvider>
           <Account />
         </TantoProvider>
       </QueryClientProvider>
