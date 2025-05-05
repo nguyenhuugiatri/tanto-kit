@@ -2,7 +2,7 @@ import { type Theme, css, Global, ThemeProvider as EmotionThemeProvider } from '
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import { tantoDark } from '../../styles/theme';
+import { tantoDarkTheme } from '../../styles/theme';
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -10,7 +10,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider(props: ThemeProviderProps) {
-  const { children, theme: initialTheme = tantoDark } = props;
+  const { children, theme: initialTheme = tantoDarkTheme } = props;
   const [theme] = useState(initialTheme);
 
   return (

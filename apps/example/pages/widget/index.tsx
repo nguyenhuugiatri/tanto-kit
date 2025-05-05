@@ -1,5 +1,5 @@
 import { Button, User } from '@nextui-org/react';
-import { getDefaultConfig, TantoConnectButton, TantoProvider } from '@sky-mavis/tanto-widget';
+import { getDefaultConfig, TantoConnectButton, tantoLightTheme, TantoProvider } from '@sky-mavis/tanto-widget';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FC, useState } from 'react';
 import { useAccount, useSignMessage, WagmiProvider } from 'wagmi';
@@ -13,9 +13,18 @@ const WagmiExample: FC = () => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <TantoProvider>
-          <Account />
-        </TantoProvider>
+        <div className={'grid grid-cols-2 gap-4'}>
+          <div className={'bg-black p-4'}>
+            <TantoProvider>
+              <Account />
+            </TantoProvider>
+          </div>
+          <div className={'bg-white p-4'}>
+            <TantoProvider theme={tantoLightTheme}>
+              <Account />
+            </TantoProvider>
+          </div>
+        </div>
       </QueryClientProvider>
     </WagmiProvider>
   );

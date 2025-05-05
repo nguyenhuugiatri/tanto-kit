@@ -1,6 +1,6 @@
 import type { Theme } from '@emotion/react';
 
-export const tantoDark: Theme = {
+export const tantoDarkTheme: Theme = {
   /* ------------------ INFO ----------------- */
   name: 'tanto-dark',
 
@@ -87,7 +87,7 @@ export const tantoDark: Theme = {
   tooltipBoxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.10),  0px 4px 20px 0px rgba(0, 0, 0, 0.40)',
 };
 
-export const light: Theme = {
+export const tantoLightTheme: Theme = {
   /* ------------------ INFO ----------------- */
   name: 'tanto-light',
 
