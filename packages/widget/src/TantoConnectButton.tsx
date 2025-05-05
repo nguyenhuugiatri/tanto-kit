@@ -19,7 +19,7 @@ export function TantoConnectButton() {
         <SmoothWidth>
           {isConnected ? (
             <Box align="center" gap={8}>
-              <Avatar seed={normalizedAddress} size={'S'} />
+              <Avatar seed={normalizedAddress} size="S" />
               <p>{truncate(normalizedAddress)}</p>
             </Box>
           ) : (

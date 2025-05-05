@@ -1,8 +1,16 @@
 import { type HTMLAttributes } from 'react';
 import useResizeObserver from 'use-resize-observer';
 
-export const SmoothWidth = ({ children, ...rest }: HTMLAttributes<HTMLDivElement>) => {
-  const { width, ref } = useResizeObserver();
+type SmoothWidth = HTMLAttributes<HTMLDivElement> & {
+  offset?: number;
+};
+
+export const SmoothWidth = ({ children, offset = 4, ...rest }: SmoothWidth) => {
+  const { width, ref } = useResizeObserver({
+    box: 'border-box',
+    round: n => n + offset,
+  });
+
   return (
     <div
       style={{
