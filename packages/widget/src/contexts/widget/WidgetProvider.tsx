@@ -12,7 +12,7 @@ const WALLETS_VIEW: View = {
       css={theme => ({
         fontSize: 11,
         fontWeight: 500,
-        color: theme.neutralTextColor,
+        color: theme.neutralColor,
         textTransform: 'uppercase',
         textAlign: 'center',
       })}

@@ -3,8 +3,8 @@ export interface WidgetTheme {
   name: string;
   /* ------------------ GENERAL ----------------- */
   fontFamily: string;
-  textColor: string;
-  neutralTextColor: string;
+  foregroundColor: string;
+  neutralColor: string;
   linkTextColor: string;
   linkTextSecondaryColor: string;
   borderColor: string;

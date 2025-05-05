@@ -6,8 +6,8 @@ export const tantoDark: Theme = {
 
   /* ------------------ GENERAL ----------------- */
   fontFamily: "'Work Sans', 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
-  textColor: '#fff',
-  neutralTextColor: 'rgba(205, 213, 229, 0.75)',
+  foregroundColor: '#fff',
+  neutralColor: 'rgba(205, 213, 229, 0.75)',
   linkTextColor: '#5294F8',
   linkTextSecondaryColor: '#136AEC',
   borderColor: '#353A45',
@@ -93,8 +93,8 @@ export const light: Theme = {
 
   /* ------------------ GENERAL ----------------- */
   fontFamily: "'Work Sans', 'Nunito Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
-  textColor: '#000',
-  neutralTextColor: 'rgba(0, 0, 0, 0.75)',
+  foregroundColor: '#000',
+  neutralColor: 'rgba(0, 0, 0, 0.75)',
   linkTextColor: '#1D4ED8',
   linkTextSecondaryColor: '#1E40AF',
   borderColor: '#D1D5DB',
