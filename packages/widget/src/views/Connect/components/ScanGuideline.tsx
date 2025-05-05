@@ -5,6 +5,7 @@ import { ScanWalletsIcon } from '../../../assets/ScanWalletsIcon';
 import { SmallTransparentWC } from '../../../assets/SmallTransparentWC';
 
 const Container = styled.div({
+  display: 'flex',
   gap: 8,
   fontSize: 14,
   alignItems: 'center',

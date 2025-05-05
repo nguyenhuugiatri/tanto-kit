@@ -91,10 +91,12 @@ const Content = forwardRef<ElementRef<typeof Dialog.Content>, Dialog.DialogConte
     const theme = useTheme();
     return (
       <ContentComponent ref={ref} css={{ backgroundColor: theme.modalBackgroundColor }} {...rest}>
-        <SmoothHeight>
-          <Description />
-          <CSSReset>{children}</CSSReset>
-        </SmoothHeight>
+        <CSSReset>
+          <SmoothHeight>
+            <Description />
+            {children}
+          </SmoothHeight>
+        </CSSReset>
       </ContentComponent>
     );
   },
