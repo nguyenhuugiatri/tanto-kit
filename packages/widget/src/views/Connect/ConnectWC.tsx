@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box } from '../../components/box/Box';
@@ -13,7 +13,7 @@ import { openWindow } from '../../utils/openWindow';
 import { ConnectLayout } from './components/ConnectLayout';
 import { ScanGuideline } from './components/ScanGuideline';
 
-const ScanQRCode = memo(({ uri }: { uri: string | undefined }) => {
+const ScanQRCode = ({ uri }: { uri: string | undefined }) => {
   return (
     <Box vertical align="center" justify="center" gap={20} pt={20}>
       <Box vertical align="center" justify="center" gap={16}>
@@ -24,7 +24,7 @@ const ScanQRCode = memo(({ uri }: { uri: string | undefined }) => {
       <GetWalletCTA />
     </Box>
   );
-});
+};
 
 export function ConnectWC() {
   const mobile = isMobile();

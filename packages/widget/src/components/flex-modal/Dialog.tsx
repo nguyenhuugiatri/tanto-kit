@@ -37,10 +37,10 @@ const DialogContent = styled(DialogPrimitive.Content, {
     animationDuration: '150ms',
 
     '&[data-state="open"]': {
-      animation: `${fadeInUp} 150ms ease-in`,
+      animation: `${fadeInUp} 150ms ease`,
     },
     '&[data-state="closed"]': {
-      animation: `${fadeOutDown} 150ms ease-out`,
+      animation: `${fadeOutDown} 150ms ease`,
     },
   },
   ({ theme, isEmbedded }) =>

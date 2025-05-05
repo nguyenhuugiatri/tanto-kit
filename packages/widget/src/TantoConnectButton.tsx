@@ -1,6 +1,6 @@
 import { useAccount } from 'wagmi';
 
-import { SmoothWidth } from './components/animated-containers/SmoothResize';
+import { SmoothWidth } from './components/animated-containers/SmoothWidth';
 import { Avatar } from './components/avatar/Avatar';
 import { Box } from './components/box/Box';
 import { Button } from './components/button/Button';

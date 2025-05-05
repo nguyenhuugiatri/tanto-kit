@@ -1,7 +1,7 @@
 import { AnimatePresence, AnimationDefinition, AnimationProps } from 'motion/react';
 import * as m from 'motion/react-m';
 import type { ReactNode } from 'react';
-import { forwardRef, memo } from 'react';
+import { forwardRef } from 'react';
 
 interface TransitionedViewProps {
   children: ReactNode;
@@ -16,13 +16,13 @@ const animationProps: AnimationProps = {
   transition: { duration: 0.2 },
 };
 
-export const TransitionedView = memo(
-  forwardRef<HTMLDivElement, TransitionedViewProps>(({ children, viewKey, onAnimationComplete }, ref) => (
+export const TransitionedView = forwardRef<HTMLDivElement, TransitionedViewProps>(
+  ({ children, viewKey, onAnimationComplete }, ref) => (
     <AnimatePresence initial={false} mode="popLayout">
       <m.div
         key={viewKey}
         ref={ref}
-        css={{
+        style={{
           width: '100%',
         }}
         {...animationProps}
@@ -31,5 +31,5 @@ export const TransitionedView = memo(
         {children}
       </m.div>
     </AnimatePresence>
-  )),
+  ),
 );
