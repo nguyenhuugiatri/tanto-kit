@@ -14,12 +14,12 @@ const WagmiExample: FC = () => {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <div className={'grid grid-cols-2 gap-4'}>
-          <div className={'bg-black p-4'}>
+          <div className={'bg-black'}>
             <TantoProvider>
               <Account />
             </TantoProvider>
           </div>
-          <div className={'bg-white p-4'}>
+          <div className={'bg-white'}>
             <TantoProvider theme={tantoLightTheme}>
               <Account />
             </TantoProvider>
