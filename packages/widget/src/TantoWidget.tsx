@@ -1,41 +1,24 @@
-import { useEffect } from 'react';
 import { useAccount, useAccountEffect, useBalance } from 'wagmi';
 
-import * as dataUris from './assets/data-uris';
 import { TransitionedView } from './components/animated-containers/TransitionedView';
-import { FlexModal, FlexModalProps } from './components/flex-modal/FlexModal';
-import { CONNECT_WIDGET_HIDE_DELAY } from './constants';
-import { usePreloadImages } from './hooks/usePreloadImages';
+import { FlexModal } from './components/flex-modal/FlexModal';
+import { CONNECT_WIDGET_HIDE_DELAY, RONIN_WALLET_DEEEPLINK } from './constants';
+import { usePreloadTantoImages } from './hooks/usePreloadImages';
+import { useResetView } from './hooks/useResetView';
 import { useWalletConnectListener } from './hooks/useWalletConnectListener';
 import { useWidget } from './hooks/useWidget';
-import { authenticatedRoutes, publicRoutes, Route } from './types/route';
 import { isMobile } from './utils';
 import { openWindow } from './utils/openWindow';
-import { ConnectInjector } from './views/Connect/ConnectInjector';
-import { ConnectWC } from './views/Connect/ConnectWC';
-import { Profile } from './views/Profile/Profile';
-import { WalletList } from './views/WalletList/WalletList';
+import { views } from './views';
 
-export interface TantoWidgetProps {
-  container?: FlexModalProps['container'];
-}
-
-const views = {
-  [Route.WALLETS]: <WalletList />,
-  [Route.CONNECT_INJECTOR]: <ConnectInjector />,
-  [Route.CONNECT_WC]: <ConnectWC />,
-  [Route.PROFILE]: <Profile />,
-};
-
-export function TantoWidget(props: TantoWidgetProps) {
-  const { container } = props;
-  const { view, open, setOpen, hide, goBack, reset } = useWidget();
-  const { isConnected, address, chainId, connector } = useAccount();
+export function TantoWidget() {
+  const { view, open, setOpen, hide, goBack } = useWidget();
+  const { address, chainId, connector } = useAccount();
 
   useWalletConnectListener({
     connector,
     onSignRequest: () => {
-      if (isMobile()) openWindow('roninwallet://');
+      if (isMobile()) openWindow(RONIN_WALLET_DEEEPLINK);
     },
   });
 
@@ -46,32 +29,11 @@ export function TantoWidget(props: TantoWidgetProps) {
     },
   });
 
-  useEffect(() => {
-    if (
-      (isConnected && publicRoutes.includes(view.route)) ||
-      (!isConnected && authenticatedRoutes.includes(view.route))
-    )
-      reset();
-  }, [isConnected, view.route]);
-
-  usePreloadImages([
-    dataUris.blueFilledWCLogoUri,
-    dataUris.highlightedWalletItemBackgroundUri,
-    dataUris.highlightedWalletItemHoverBackgroundUri,
-    dataUris.blueFilledWCLogoUri,
-    dataUris.roninExtensionCustomLogoUri,
-    dataUris.roninExtensionCustomSquareLogoUri,
-    dataUris.roninLogoUri,
-    dataUris.roninMobileCustomLogoUri,
-    dataUris.roninMobileCustomSquareLogoUri,
-    dataUris.roninWaypointCustomLogoUri,
-    dataUris.roninWaypointCustomSquareLogoUri,
-    dataUris.scanWalletsIconUri,
-  ]);
+  useResetView();
+  usePreloadTantoImages();
 
   return (
     <FlexModal
-      container={container}
       title={view.title}
       open={open}
       showBackButton={view.showBackButton}

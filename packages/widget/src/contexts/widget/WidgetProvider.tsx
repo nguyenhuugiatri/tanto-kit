@@ -1,7 +1,6 @@
 import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-import { TantoWidget } from '../../TantoWidget';
 import { authenticatedRoutes, Route } from '../../types/route';
 import { type View, type WidgetState, WidgetContext } from './WidgetContext';
 
@@ -101,10 +100,5 @@ export const WidgetProvider = ({ children }: PropsWithChildren) => {
     [open, navigation, show, hide, goTo, goBack, reset],
   );
 
-  return (
-    <WidgetContext.Provider value={contextValue}>
-      {children}
-      <TantoWidget />
-    </WidgetContext.Provider>
-  );
+  return <WidgetContext.Provider value={contextValue}>{children}</WidgetContext.Provider>;
 };
