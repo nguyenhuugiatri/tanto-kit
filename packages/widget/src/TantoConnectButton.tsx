@@ -1,6 +1,5 @@
 import { useAccount } from 'wagmi';
 
-import { Fade } from './components/animated-containers/Fade';
 import { SmoothWidth } from './components/animated-containers/SmoothWidth';
 import { TransitionedView } from './components/animated-containers/TransitionedView';
 import { Avatar } from './components/avatar/Avatar';
