@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 
-const BackgroundPath = styled('path')(props => ({
-  fill: props.theme.backgroundColor,
+const BackgroundPath = styled('path')(({ theme }) => ({
+  fill: theme.colors.background,
 }));
 
 export function WarningIcon() {

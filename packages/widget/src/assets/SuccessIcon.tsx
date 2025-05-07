@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 
-const BackgroundPath = styled('circle')(props => ({
-  fill: props.theme.backgroundColor,
+const BackgroundPath = styled('circle')(({ theme }) => ({
+  fill: theme.colors.background,
 }));
 
 export function SuccessIcon() {
