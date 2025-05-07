@@ -2,7 +2,6 @@ export interface WidgetTheme {
   name: string;
   fontFamily: string;
   colors: {
-    // button
     buttonPrimary: string;
     buttonPrimaryHover: string;
     buttonPrimaryActive: string;
@@ -23,13 +22,8 @@ export interface WidgetTheme {
     scrollbarThumb: string;
     link: string;
     border: string;
-    errorBorder: string;
     error: string;
     listItem: string;
     listItemHover: string;
-    listItemActive: string;
-  };
-  shadow: {
-    modal: string;
   };
 }

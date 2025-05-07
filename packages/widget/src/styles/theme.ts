@@ -24,14 +24,9 @@ export const tantoDarkTheme: Theme = {
     scrollbarThumb: '#353a45',
     link: '#5294F8',
     border: '#353A45',
-    errorBorder: '#971127',
     error: '#F6515E',
     listItem: 'rgba(205, 213, 229, 0.07)',
     listItemHover: 'rgba(205, 213, 229, 0.1)',
-    listItemActive: 'rgba(205, 213, 229, 0.15)',
-  },
-  shadow: {
-    modal: '0px 0px 1px 0px rgba(0, 0, 0, 0.20), 0px 24px 64px 0px #000',
   },
 };
 
@@ -59,13 +54,8 @@ export const tantoLightTheme: Theme = {
     scrollbarThumb: '#D1D5DB',
     link: '#1D4ED8',
     border: '#D1D5DB',
-    errorBorder: '#B91C1C',
     error: '#EF4444',
     listItem: 'transparent',
     listItemHover: 'rgba(0, 0, 0, 0.05)',
-    listItemActive: 'rgba(0, 0, 0, 0.10)',
-  },
-  shadow: {
-    modal: '0px 0px 1px 0px rgba(0, 0, 0, 0.10), 0px 12px 24px 0px rgba(0, 0, 0, 0.20)',
   },
 };

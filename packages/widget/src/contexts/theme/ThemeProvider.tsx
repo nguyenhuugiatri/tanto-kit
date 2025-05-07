@@ -1,17 +1,18 @@
 import { type Theme, css, Global, ThemeProvider as EmotionThemeProvider } from '@emotion/react';
+import merge from 'lodash.merge';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useMemo } from 'react';
 
 import { tantoDarkTheme } from '../../styles/theme';
 
 interface ThemeProviderProps {
   children: ReactNode;
-  theme?: Theme;
+  theme?: DeepPartial<Theme>;
 }
 
 export function ThemeProvider(props: ThemeProviderProps) {
   const { children, theme: initialTheme = tantoDarkTheme } = props;
-  const [theme] = useState(initialTheme);
+  const theme = useMemo(() => merge(tantoDarkTheme, initialTheme), [initialTheme]);
 
   return (
     <EmotionThemeProvider theme={theme}>
