@@ -7,7 +7,7 @@ import {
   TantoProvider,
 } from '@sky-mavis/tanto-widget';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { useAccount, useDisconnect, useSignMessage, WagmiProvider } from 'wagmi';
 
 import WillRender from '../../components/will-render/WillRender';
@@ -46,11 +46,14 @@ const Account = () => {
   const { address, chainId, isConnected, connector } = useAccount();
   const { signMessage } = useSignMessage();
   const { disconnect } = useDisconnect();
+  const [show, setShow] = useState(false);
 
   return (
     <div className={'w-full min-h-screen flex items-center flex-col gap-4 p-10'}>
       <TantoConnectButton />
-      {/* <TantoEmbeddedWidget /> */}
+      <Button onClick={() => setShow(!show)}>Show/Hide embeded</Button>
+      {show && <TantoEmbeddedWidget />}
+
       <WillRender when={isConnected}>
         <User name={connector?.name} description={address} />
         <p>ChainId: {chainId}</p>
