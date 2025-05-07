@@ -6,8 +6,8 @@ import { Badge } from '../../../components/badge/Badge';
 import { Box } from '../../../components/box/Box';
 import { WALLET_ITEM_HEIGHT } from '../../../constants';
 import { useIsMobileView } from '../../../hooks/useIsMobileView';
-import { useTanto } from '../../../hooks/useTanto';
-import { useWidget } from '../../../hooks/useWidget';
+import { useWidgetConnect } from '../../../hooks/useWidgetConnect';
+import { useWidgetRouter } from '../../../hooks/useWidgetRouter';
 import { Route } from '../../../types/route';
 import { Wallet } from '../../../types/wallet';
 import { isInjectedConnector, isWCConnector } from '../../../utils';
@@ -66,8 +66,8 @@ const WalletDescription = styled.p(props => ({
 export const WalletItem = ({ wallet }: WalletItemProps) => {
   const { id, name, icon, connector, homepage, isInstalled, displayOptions = {} } = wallet;
   const { thumbnail, description, highlight } = displayOptions;
-  const { setWallet } = useTanto();
-  const { goTo } = useWidget();
+  const { setWallet } = useWidgetConnect();
+  const { goTo } = useWidgetRouter();
   const isMobile = useIsMobileView();
 
   const walletLogo = thumbnail ?? icon;

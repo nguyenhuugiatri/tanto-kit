@@ -8,15 +8,12 @@ export interface View {
   showBackButton?: boolean;
 }
 
-export interface WidgetState {
-  open: boolean;
+export interface WidgetRouterState {
   view: View;
   history: View[];
-  show: () => void;
-  hide: () => void;
-  setOpen: (open: boolean) => void;
   goTo: (route: Route, options?: Omit<View, 'route'>) => void;
   goBack: () => void;
+  reset: (route?: Route) => void;
 }
 
-export const WidgetContext = createContext<WidgetState | undefined>(undefined);
+export const WidgetRouterContext = createContext<WidgetRouterState | undefined>(undefined);

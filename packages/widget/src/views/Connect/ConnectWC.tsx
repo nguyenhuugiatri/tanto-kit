@@ -3,9 +3,9 @@ import { Box } from '../../components/box/Box';
 import { CopyButton } from '../../components/copy-button/CopyButton';
 import { GetWalletCTA } from '../../components/get-wallet-cta/GetWalletCTA';
 import { WCQRCode } from '../../components/qr-code/WCQRCode';
-import { RONIN_WALLET_DEEEPLINK } from '../../constants';
-import { useTanto } from '../../hooks/useTanto';
+import { RONIN_WALLET_APP_DEEPLINK } from '../../constants';
 import { useWalletConnectUri } from '../../hooks/useWalletConnectUri';
+import { useWidgetConnect } from '../../hooks/useWidgetConnect';
 import { CONNECT_STATES } from '../../types';
 import { generateRoninMobileWCLink, isMobile } from '../../utils';
 import { openWindow } from '../../utils/openWindow';
@@ -27,15 +27,15 @@ const ScanQRCode = ({ uri }: { uri: string | undefined }) => {
 
 export function ConnectWC() {
   const mobile = isMobile();
-  const { wallet, connector } = useTanto();
+  const { wallet } = useWidgetConnect();
   const { uri, status, generateConnectUri } = useWalletConnectUri({
-    connector,
+    connector: wallet?.connector,
     onReceiveDisplayUri: uri => {
-      if (mobile) openWindow(generateRoninMobileWCLink(uri, RONIN_WALLET_DEEEPLINK));
+      if (mobile) openWindow(generateRoninMobileWCLink(uri, RONIN_WALLET_APP_DEEPLINK));
     },
   });
 
-  if (!wallet || !connector) return null;
+  if (!wallet || !wallet.connector) return null;
 
   if (mobile)
     return (
