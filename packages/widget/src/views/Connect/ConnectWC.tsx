@@ -6,7 +6,7 @@ import { WCQRCode } from '../../components/qr-code/WCQRCode';
 import { RONIN_WALLET_APP_DEEPLINK } from '../../constants';
 import { useWalletConnectUri } from '../../hooks/useWalletConnectUri';
 import { useWidgetConnect } from '../../hooks/useWidgetConnect';
-import { CONNECT_STATES } from '../../types';
+import { ConnectState } from '../../types';
 import { generateRoninMobileWCLink, isMobile } from '../../utils';
 import { openWindow } from '../../utils/openWindow';
 import { ConnectLayout } from './components/ConnectLayout';
@@ -27,22 +27,22 @@ const ScanQRCode = ({ uri }: { uri: string | undefined }) => {
 
 export function ConnectWC() {
   const mobile = isMobile();
-  const { wallet } = useWidgetConnect();
+  const { selectedWallet, selectedConnector } = useWidgetConnect();
   const { uri, status, generateConnectUri } = useWalletConnectUri({
-    connector: wallet?.connector,
+    connector: selectedConnector,
     onReceiveDisplayUri: uri => {
       if (mobile) openWindow(generateRoninMobileWCLink(uri, RONIN_WALLET_APP_DEEPLINK));
     },
   });
 
-  if (!wallet || !wallet.connector) return null;
+  if (!selectedWallet) return null;
 
   if (mobile)
     return (
       <ConnectLayout
         status={status}
-        walletIcon={wallet.icon}
-        walletName={wallet.name}
+        walletIcon={selectedWallet.icon}
+        walletName={selectedWallet.name}
         wcUri={uri}
         onRetry={generateConnectUri}
       />
@@ -50,13 +50,13 @@ export function ConnectWC() {
 
   return (
     <TransitionedView viewKey={status}>
-      {status === CONNECT_STATES.PENDING ? (
+      {status === ConnectState.PENDING ? (
         <ScanQRCode uri={uri} />
       ) : (
         <ConnectLayout
           status={status}
-          walletIcon={wallet.icon}
-          walletName={wallet.name}
+          walletIcon={selectedWallet.icon}
+          walletName={selectedWallet.name}
           wcUri={uri}
           onRetry={generateConnectUri}
         />

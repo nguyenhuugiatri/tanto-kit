@@ -1,19 +1,15 @@
 import { createContext } from 'react';
+import { Connector } from 'wagmi';
 
 import { Wallet } from '../../types/wallet';
 
-export enum ConnectState {
-  PENDING = 'PENDING',
-  OPENING_WALLET = 'OPENING_WALLET',
-  SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
-}
-
 export interface WidgetConnectState {
-  status: ConnectState;
-  wallet: Wallet | null;
-  setWallet: (wallet: Wallet) => void;
-  connect: () => void;
+  wallets: Wallet[];
+  primaryWallets: Wallet[];
+  secondaryWallets: Wallet[];
+  selectedWallet?: Wallet;
+  selectedConnector?: Connector;
+  setSelectedWallet: (wallet: Wallet) => void;
 }
 
 export const WidgetConnectContext = createContext<WidgetConnectState | undefined>(undefined);

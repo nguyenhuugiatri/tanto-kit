@@ -1,40 +1,23 @@
-import { PropsWithChildren, useCallback, useMemo, useState } from 'react';
-import { Connector, useConnect, UseConnectReturnType } from 'wagmi';
+import { PropsWithChildren, useMemo, useState } from 'react';
 
+import { useWallets } from '../../hooks/useWallets';
 import { Wallet } from '../../types/wallet';
-import { isMobile, isWCConnector } from '../../utils';
-import { ConnectState, WidgetConnectContext, WidgetConnectState } from './WidgetConnectContext';
-
-const normalizeConnectStatus = (status: UseConnectReturnType['status'], connector?: Connector) => {
-  switch (status) {
-    case 'idle':
-    case 'pending':
-      if (isWCConnector(connector?.id) && isMobile()) return ConnectState.OPENING_WALLET;
-      return ConnectState.PENDING;
-    case 'success':
-      return ConnectState.SUCCESS;
-    case 'error':
-      return ConnectState.ERROR;
-  }
-};
+import { WidgetConnectContext, WidgetConnectState } from './WidgetConnectContext';
 
 export const WidgetConnectProvider = ({ children }: PropsWithChildren) => {
-  const { status, connect: wagmiConnect } = useConnect();
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-
-  const connect = useCallback(() => {
-    const connector = wallet?.connector;
-    if (connector) wagmiConnect({ connector });
-  }, [wallet, wagmiConnect]);
-
+  const { wallets, primaryWallets, secondaryWallets } = useWallets();
+  const [selectedWallet, setSelectedWallet] = useState<Wallet>();
+  const selectedConnector = useMemo(() => selectedWallet?.connector, [selectedWallet?.connector]);
   const contextValue = useMemo<WidgetConnectState>(
     () => ({
-      status: normalizeConnectStatus(status, wallet?.connector),
-      wallet,
-      setWallet,
-      connect,
+      wallets,
+      primaryWallets,
+      secondaryWallets,
+      selectedConnector,
+      selectedWallet,
+      setSelectedWallet,
     }),
-    [status, wallet, connect],
+    [selectedConnector, selectedWallet],
   );
 
   return <WidgetConnectContext.Provider value={contextValue}>{children}</WidgetConnectContext.Provider>;

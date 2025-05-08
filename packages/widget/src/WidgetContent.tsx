@@ -56,8 +56,7 @@ export const WidgetContent = ({ close, onConnect, onDisconnect }: WidgetContentP
 
   return (
     <CSSReset>
-      {/* TODO: Use theme's variable instead */}
-      <SmoothHeight css={{ minWidth: 378 }}>
+      <SmoothHeight>
         <Box align="center" gap={8} mb={8}>
           <ActionSection>
             {view.showBackButton && (

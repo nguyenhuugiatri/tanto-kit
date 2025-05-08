@@ -66,7 +66,7 @@ const WalletDescription = styled.p(props => ({
 export const WalletItem = ({ wallet }: WalletItemProps) => {
   const { id, name, icon, connector, homepage, isInstalled, displayOptions = {} } = wallet;
   const { thumbnail, description, highlight } = displayOptions;
-  const { setWallet } = useWidgetConnect();
+  const { setSelectedWallet } = useWidgetConnect();
   const { goTo } = useWidgetRouter();
   const isMobile = useIsMobileView();
 
@@ -79,9 +79,9 @@ export const WalletItem = ({ wallet }: WalletItemProps) => {
       window.open(homepage, '_blank', 'noopener,noreferrer');
       return;
     }
-    setWallet(wallet);
+    setSelectedWallet(wallet);
     goTo(isWCConnector(id) ? Route.CONNECT_WC : Route.CONNECT_INJECTOR, { title: name });
-  }, [wallet, setWallet, goTo, isInstalled, homepage, id, name]);
+  }, [wallet, setSelectedWallet, goTo, isInstalled, homepage, id, name]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -101,7 +101,7 @@ export const WalletItem = ({ wallet }: WalletItemProps) => {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
-      {walletLogo && <div>{walletLogo}</div>}
+      {walletLogo && walletLogo}
       <Box vertical flex={1}>
         <WalletName>{name}</WalletName>
         {description && <WalletDescription>{description}</WalletDescription>}

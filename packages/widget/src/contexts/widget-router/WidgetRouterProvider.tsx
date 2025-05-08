@@ -83,9 +83,10 @@ export const WidgetRouterProvider = ({ children }: PropsWithChildren) => {
   );
 
   const goBack = useCallback(() => {
-    if (routerState.history.length <= 1) return;
+    setRouterState(prevRouterState => {
+      const { history } = prevRouterState;
+      if (history.length <= 1) return prevRouterState;
 
-    setRouterState(({ history }) => {
       const newHistory = history.slice(0, -1);
       return {
         view: newHistory[newHistory.length - 1],
