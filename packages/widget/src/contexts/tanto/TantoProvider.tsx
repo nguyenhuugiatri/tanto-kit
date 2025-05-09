@@ -1,23 +1,38 @@
 import type { Theme } from '@emotion/react';
-import { domAnimation, LazyMotion } from 'motion/react';
-import type { ReactNode } from 'react';
+import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
+import { type ReactNode, useMemo } from 'react';
 
+import { useConnectCallback } from '../../hooks/useConnectCallback';
 import { usePreloadTantoImages } from '../../hooks/usePreloadImages';
+import { AccountConnectionCallback } from '../../types/connect';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { defaultTantoConfig, TantoConfig, TantoContext } from './TantoContext';
 
-export interface TantoProviderProps {
+export type TantoProviderProps = AccountConnectionCallback & {
+  children?: ReactNode;
   theme?: Theme;
-  children: ReactNode;
-}
+  config?: TantoConfig;
+};
 
-export function TantoProvider({ theme, children }: TantoProviderProps) {
+export function TantoProvider({ config: customConfig, theme, onConnect, onDisconnect, children }: TantoProviderProps) {
   usePreloadTantoImages();
+  useConnectCallback({
+    onConnect,
+    onDisconnect,
+  });
+
+  const config = useMemo<TantoConfig>(() => Object.assign({}, defaultTantoConfig, customConfig), [customConfig]);
+  const contextValue = useMemo(() => ({ config }), [config]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <LazyMotion features={domAnimation} strict>
-        {children}
-      </LazyMotion>
-    </ThemeProvider>
+    <TantoContext.Provider value={contextValue}>
+      <ThemeProvider theme={theme}>
+        <MotionConfig reducedMotion={config.reducedMotion ? 'always' : 'never'}>
+          <LazyMotion features={domAnimation} strict>
+            {children}
+          </LazyMotion>
+        </MotionConfig>
+      </ThemeProvider>
+    </TantoContext.Provider>
   );
 }

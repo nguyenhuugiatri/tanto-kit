@@ -1,50 +1,23 @@
 import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 
+import { viewConfigs } from '../../configs/viewConfigs';
 import { VISIBILITY_TRANSITION_DURATION } from '../../constants';
+import { useTantoConfig } from '../../hooks/useTantoConfig';
 import { useUnmount } from '../../hooks/useUnmount';
 import { authenticatedRoutes, internalRoutes, publicRoutes, Route } from '../../types/route';
 import { View, WidgetRouterContext, WidgetRouterState } from './WidgetRouterContext';
 
-const viewConfigs: Record<Route, View> = {
-  [Route.WALLETS]: {
-    route: Route.WALLETS,
-    title: (
-      <p
-        css={theme => ({
-          fontSize: 11,
-          fontWeight: 500,
-          color: theme.neutralColor,
-          transform: 'translateY(6px)',
-          textTransform: 'uppercase',
-          textAlign: 'center',
-        })}
-      >
-        Powered by Ronin Wallet
-      </p>
-    ),
-  },
-  [Route.PROFILE]: {
-    route: Route.PROFILE,
-    title: <p css={{ textAlign: 'center' }}>Connected</p>,
-  },
-  [Route.CONNECT_INJECTOR]: {
-    route: Route.CONNECT_INJECTOR,
-  },
-  [Route.CONNECT_WC]: {
-    route: Route.CONNECT_WC,
-  },
-};
-
 export const WidgetRouterProvider = ({ children }: PropsWithChildren) => {
+  const { disableProfile } = useTantoConfig();
   const { isConnected } = useAccount();
 
   const getInitialView = useCallback(
     (route?: Route) => {
       if (route) return viewConfigs[route];
-      return isConnected ? viewConfigs[Route.PROFILE] : viewConfigs[Route.WALLETS];
+      return isConnected && !disableProfile ? viewConfigs[Route.PROFILE] : viewConfigs[Route.WALLETS];
     },
-    [isConnected],
+    [isConnected, disableProfile],
   );
 
   const [routerState, setRouterState] = useState(() => {
@@ -61,15 +34,16 @@ export const WidgetRouterProvider = ({ children }: PropsWithChildren) => {
   );
 
   const goTo = useCallback(
-    (nextRoute: Route, options: Omit<View, 'route'> = {}) => {
+    (nextRoute: Route, options?: Partial<Omit<View, 'route'>>) => {
       if (!isConnected && authenticatedRoutes.includes(nextRoute)) return;
 
       setRouterState(({ view: currentView, history }) => {
         const isSameView = nextRoute === currentView.route;
         const newView: View = {
           route: nextRoute,
-          title: options.title ?? currentView.title,
-          showBackButton: options.showBackButton ?? (!isSameView && history.length > 0),
+          title: options?.title ?? currentView.title,
+          content: options?.content ?? viewConfigs[nextRoute].content,
+          showBackButton: options?.showBackButton ?? (!isSameView && history.length > 0),
           ...options,
         };
 
@@ -98,10 +72,11 @@ export const WidgetRouterProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const { route } = routerState.view;
     const shouldReset =
-      (isConnected && publicRoutes.includes(route)) || (!isConnected && authenticatedRoutes.includes(route));
+      (isConnected && !disableProfile && publicRoutes.includes(route)) ||
+      (!isConnected && authenticatedRoutes.includes(route));
 
     if (shouldReset) reset();
-  }, [isConnected, routerState.view.route, reset]);
+  }, [isConnected, disableProfile, routerState.view.route, reset]);
 
   useUnmount(() => {
     if (internalRoutes.includes(routerState.view.route)) setTimeout(reset, VISIBILITY_TRANSITION_DURATION);

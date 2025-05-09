@@ -6,7 +6,7 @@ import { WCQRCode } from '../../components/qr-code/WCQRCode';
 import { RONIN_WALLET_APP_DEEPLINK } from '../../constants';
 import { useWalletConnectUri } from '../../hooks/useWalletConnectUri';
 import { useWidgetConnect } from '../../hooks/useWidgetConnect';
-import { ConnectState } from '../../types';
+import { ConnectState } from '../../types/connect';
 import { generateRoninMobileWCLink, isMobile } from '../../utils';
 import { openWindow } from '../../utils/openWindow';
 import { ConnectLayout } from './components/ConnectLayout';

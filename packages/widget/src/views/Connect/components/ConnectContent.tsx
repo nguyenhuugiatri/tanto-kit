@@ -5,7 +5,7 @@ import { Fade } from '../../../components/animated-containers/Fade';
 import { TransitionedView } from '../../../components/animated-containers/TransitionedView';
 import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
-import { ConnectState } from '../../../types';
+import { ConnectState } from '../../../types/connect';
 import { generateRoninMobileWCLink } from '../../../utils';
 
 const ContentSection = styled(Box)({

@@ -7,7 +7,7 @@ import { ConnectLayout } from './components/ConnectLayout';
 
 export function ConnectInjector() {
   const { selectedWallet: wallet, selectedConnector: connector } = useWidgetConnect();
-  const { status, connect } = useConnect(connector);
+  const { status, connect } = useConnect({ connector });
 
   useEffect(() => {
     const timer = setTimeout(connect, DELAY_CONNECT);

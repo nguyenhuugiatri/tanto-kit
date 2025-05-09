@@ -28,7 +28,7 @@ const Container = styled('div', {
     padding: 16,
     cursor: 'pointer',
     outline: 'none',
-    transition: 'background 150ms ease',
+    transition: 'background 100ms ease',
   },
   ({ theme }) => ({
     backgroundColor: theme.listItemBackgroundColor,

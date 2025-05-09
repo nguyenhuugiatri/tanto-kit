@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { ReactNode } from 'react';
-import { useAccount, useAccountEffect, UseAccountEffectParameters, useBalance } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
 
 import { ArrowLeftIcon } from './assets/ArrowLeftIcon';
 import { SmoothHeight } from './components/animated-containers/SmoothHeight';
@@ -14,7 +14,6 @@ import { useWalletConnectListener } from './hooks/useWalletConnectListener';
 import { useWidgetRouter } from './hooks/useWidgetRouter';
 import { isMobile } from './utils';
 import { openWindow } from './utils/openWindow';
-import { views } from './views';
 
 const ActionSection = styled.div({
   minWidth: 44,
@@ -32,11 +31,9 @@ const Title = styled.h2({
 
 interface WidgetContentProps {
   close?: ReactNode;
-  onConnect?: UseAccountEffectParameters['onConnect'];
-  onDisconnect?: UseAccountEffectParameters['onDisconnect'];
 }
 
-export const WidgetContent = ({ close, onConnect, onDisconnect }: WidgetContentProps) => {
+export const WidgetContent = ({ close }: WidgetContentProps) => {
   const { view, goBack } = useWidgetRouter();
   const { address, chainId, connector } = useAccount();
 
@@ -47,11 +44,6 @@ export const WidgetContent = ({ close, onConnect, onDisconnect }: WidgetContentP
     onSignRequest: () => {
       if (isMobile()) openWindow(RONIN_WALLET_APP_DEEPLINK);
     },
-  });
-
-  useAccountEffect({
-    onConnect,
-    onDisconnect,
   });
 
   return (
@@ -73,7 +65,7 @@ export const WidgetContent = ({ close, onConnect, onDisconnect }: WidgetContentP
           <ActionSection>{close && close}</ActionSection>
         </Box>
         <WidgetConnectProvider>
-          <TransitionedView viewKey={view.route}>{views[view.route]}</TransitionedView>
+          <TransitionedView viewKey={view.route}>{view.content}</TransitionedView>
         </WidgetConnectProvider>
       </SmoothHeight>
     </CSSReset>

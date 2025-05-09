@@ -6,9 +6,8 @@ import { SuccessIcon } from '../../../assets/SuccessIcon';
 import { WarningIcon } from '../../../assets/WarningIcon';
 import { Fade } from '../../../components/animated-containers/Fade';
 import SquircleSpinner from '../../../components/squircle-spinner/SquircleSpinner';
-import { CONNECT_SUCCESS_DELAY } from '../../../constants';
 import { fadeIn, fadeOut, shake } from '../../../styles/animations';
-import { ConnectState } from '../../../types';
+import { ConnectState } from '../../../types/connect';
 
 interface ConnectLogoProps {
   walletIcon: ReactNode;
@@ -33,7 +32,7 @@ const LogoSection = styled(m.div)<{ status: ConnectState }>(
         animation: `${shake} 240ms ease-out both`,
         '&:before': {
           background: '#FFC34D',
-          animation: `${fadeOut} 240ms ease-out ${CONNECT_SUCCESS_DELAY}ms both`,
+          animation: `${fadeOut} 240ms ease-out 1200ms both`,
         },
       };
     }
