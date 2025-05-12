@@ -1,17 +1,26 @@
 import { css, Global, ThemeProvider as EmotionThemeProvider } from '@emotion/react';
-import { type ReactNode, useMemo } from 'react';
+import { type PropsWithChildren, useMemo } from 'react';
 
 import { tantoDarkTheme, tantoLightTheme } from '../../styles/theme';
 import type { WidgetTheme } from '../../types/theme';
 
-interface ThemeProviderProps {
-  children: ReactNode;
+export interface ThemeProviderProps {
   theme?: WidgetTheme['name'];
+  customThemeToken?: DeepPartial<WidgetTheme>;
 }
 
-export function ThemeProvider(props: ThemeProviderProps) {
-  const { children, theme: themeName = 'dark' } = props;
-  const theme = useMemo(() => (themeName === 'dark' ? tantoDarkTheme : tantoLightTheme), [themeName]);
+export function ThemeProvider(props: PropsWithChildren<ThemeProviderProps>) {
+  const { children, theme: themeName = 'dark', customThemeToken } = props;
+  const theme = useMemo(() => {
+    const baseTheme = themeName === 'dark' ? tantoDarkTheme : tantoLightTheme;
+    const theme = Object.assign({}, baseTheme, customThemeToken);
+
+    if (customThemeToken && Object.hasOwn(customThemeToken, 'colors')) {
+      Object.assign(theme.colors, customThemeToken.colors);
+    }
+
+    return theme;
+  }, [themeName, customThemeToken]);
 
   return (
     <EmotionThemeProvider theme={theme}>
