@@ -1,4 +1,3 @@
-import type { Theme } from '@emotion/react';
 import { domAnimation, LazyMotion, MotionConfig } from 'motion/react';
 import { type ReactNode, useMemo } from 'react';
 
