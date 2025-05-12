@@ -12,11 +12,12 @@ export interface WidgetTheme {
     buttonSecondaryForeground: string;
     buttonDisabled: string;
     buttonDisabledForeground: string;
-    spinner: string;
     neutral: string;
     overlay: string;
     background: string;
     foreground: string;
+    spinner: string;
+    skeleton: string;
     modalBorder: string;
     scrollbarTrack: string;
     scrollbarThumb: string;

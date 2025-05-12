@@ -79,7 +79,7 @@ const DotContainer = styled('div', {
 
 export const Avatar = ({ className, seed, size = 'M', showDot = false }: AvatarProps) => {
   const theme = useTheme();
-  const colors = seed ? getColors(seed) : [theme.skeletonBackgroundColor];
+  const colors = seed ? getColors(seed) : [theme.colors.skeleton];
   const dotSize = AvatarSizeMap[size] / 4;
 
   return (
