@@ -70,7 +70,7 @@ const WalletName = styled('p', {
     lineHeight: '1.25em',
     margin: 0,
   },
-  ({ disabled, theme }) => disabled && { color: theme.colors.neutral },
+  ({ disabled, theme }) => disabled && { color: theme.mutedText },
 );
 
 const WalletDescription = styled.p(({ theme }) => ({
