@@ -44,7 +44,7 @@ export const customThemeToken: WidgetTheme = {
   bodyText: 'oklch(0.41 0.077 78.9)',
   mutedText: 'oklch(0.51 0.077 74.3)',
 
-  overlayBackground: 'rgba(12, 12, 13, 0.8)',
+  overlayBackground: 'oklch(0.41 0.077 78.9 / 0.2)',
   overlayBackdropFilter: 'blur(10px)',
 
   drawerBorderRadius: '0.625rem',
