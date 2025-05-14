@@ -1,6 +1,9 @@
+import { useTheme } from '@emotion/react';
 import { SVGProps } from 'react';
 
 export const RoninBadge = (props: SVGProps<SVGSVGElement>) => {
+  const theme = useTheme();
+
   return (
     <svg
       width="20"
@@ -16,7 +19,7 @@ export const RoninBadge = (props: SVGProps<SVGSVGElement>) => {
         <path d="M13 1H7a6 6 0 0 0-6 6v6a6 6 0 0 0 6 6h6a6 6 0 0 0 6-6V7a6 6 0 0 0-6-6" fill="#007FF5" />
         <path
           d="M13 1H7a6 6 0 0 0-6 6v6a6 6 0 0 0 6 6h6a6 6 0 0 0 6-6V7a6 6 0 0 0-6-6Z"
-          stroke="#22252C"
+          stroke={theme.colors.background}
           strokeWidth="2"
         />
         <path
