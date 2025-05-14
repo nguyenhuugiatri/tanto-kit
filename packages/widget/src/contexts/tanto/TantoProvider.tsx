@@ -14,7 +14,14 @@ export type TantoProviderProps = AccountConnectionCallback & {
   config?: TantoConfig;
 } & ThemeProviderProps;
 
-export function TantoProvider({ config: customConfig, theme, onConnect, onDisconnect, children }: TantoProviderProps) {
+export function TantoProvider({
+  config: customConfig,
+  theme,
+  customThemeToken,
+  onConnect,
+  onDisconnect,
+  children,
+}: TantoProviderProps) {
   usePreloadTantoImages();
   useConnectCallback({
     onConnect,
@@ -35,7 +42,7 @@ export function TantoProvider({ config: customConfig, theme, onConnect, onDiscon
 
   return (
     <TantoContext.Provider value={contextValue}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme} customThemeToken={customThemeToken}>
         <MotionConfig reducedMotion={config.reducedMotion ? 'always' : 'never'}>
           <LazyMotion features={domAnimation} strict>
             <WidgetModalProvider>{children}</WidgetModalProvider>

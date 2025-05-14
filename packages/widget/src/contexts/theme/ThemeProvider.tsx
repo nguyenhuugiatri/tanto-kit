@@ -5,22 +5,18 @@ import { tantoDarkTheme, tantoLightTheme } from '../../styles/theme';
 import type { WidgetTheme } from '../../types/theme';
 
 export interface ThemeProviderProps {
-  theme?: WidgetTheme['name'];
+  theme?: WidgetTheme['mode'];
   customThemeToken?: DeepPartial<WidgetTheme>;
 }
 
 export function ThemeProvider(props: PropsWithChildren<ThemeProviderProps>) {
-  const { children, theme: themeName = 'dark', customThemeToken } = props;
+  const { children, theme: themeMode = 'dark', customThemeToken } = props;
+
   const theme = useMemo(() => {
-    const baseTheme = themeName === 'dark' ? tantoDarkTheme : tantoLightTheme;
-    const theme = Object.assign({}, baseTheme, customThemeToken);
-
-    if (customThemeToken && Object.hasOwn(customThemeToken, 'colors')) {
-      Object.assign(theme.colors, customThemeToken.colors);
-    }
-
+    const baseTheme = themeMode === 'dark' ? tantoDarkTheme : tantoLightTheme;
+    const theme = { ...baseTheme, ...customThemeToken } as WidgetTheme;
     return theme;
-  }, [themeName, customThemeToken]);
+  }, [themeMode, customThemeToken]);
 
   return (
     <EmotionThemeProvider theme={theme}>
