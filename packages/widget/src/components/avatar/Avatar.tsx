@@ -1,6 +1,16 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import BoringAvatar from 'boring-avatars';
+import BoringAvatarModule from 'boring-avatars';
+
+const BoringAvatar =
+  // BoringAvatarModule can be either a function (the component itself)
+  // or an object with a `.default` property depending on how the module is imported,
+  // especially when using Rollup with 'external' and consuming ESM-only packages.
+  // This check ensures compatibility across different bundlers and environments.
+  // @ts-expect-error
+  typeof BoringAvatarModule === 'function' ? BoringAvatarModule : BoringAvatarModule.default ?? BoringAvatarModule;
+
+export default BoringAvatar;
 
 const COLOR_GROUPS = [
   ['#2065EE', '#FFAEFC'],

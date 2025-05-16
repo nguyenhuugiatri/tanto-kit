@@ -48,6 +48,7 @@ const config = defineConfig({
       'motion',
       'viem',
       'wagmi',
+      'boring-avatars',
       '@tanstack/react-query',
     ].some(pkg => id === pkg || id.startsWith(`${pkg}/`) || id.startsWith(`@${pkg}/`)),
   plugins: [
@@ -64,7 +65,9 @@ const config = defineConfig({
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
     }),
     nodePolyfills(),
-    commonjs(),
+    commonjs({
+      esmExternals: true,
+    }),
     babel({
       babelHelpers: 'bundled',
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
