@@ -1,6 +1,6 @@
-import type { WidgetTheme } from '@sky-mavis/tanto-widget';
+import type { TantoCustomTheme } from '@sky-mavis/tanto-widget';
 
-export const customThemeToken: WidgetTheme = {
+export const customThemeToken: TantoCustomTheme = {
   mode: 'light',
   fontFamily: [
     "'Nunito'",
