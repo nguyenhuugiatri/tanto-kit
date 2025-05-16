@@ -65,9 +65,7 @@ const config = defineConfig({
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
     }),
     nodePolyfills(),
-    commonjs({
-      esmExternals: true,
-    }),
+    commonjs(),
     babel({
       babelHelpers: 'bundled',
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
