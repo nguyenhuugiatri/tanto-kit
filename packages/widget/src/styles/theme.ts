@@ -12,7 +12,7 @@ const baseThemeCommonTokens = {
     'sans-serif',
     "'Segoe UI Emoji'",
   ],
-  fontSize: '1em',
+  fontSize: 16,
   buttonPrimaryShadow: '0px 0px 0px 0px #ffffff00',
   buttonPrimaryHoverShadow: '0px 0px 0px 0px #ffffff00',
   buttonPrimaryActiveShadow: '0px 0px 0px 0px #ffffff00',
