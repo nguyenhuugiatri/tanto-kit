@@ -1,4 +1,4 @@
-export type TantoCustomTheme = Partial<TantoWidgetTheme>;
+export type TantoWidgetCustomTheme = Partial<TantoWidgetTheme>;
 
 export interface TantoWidgetTheme {
   mode: 'auto' | 'light' | 'dark';

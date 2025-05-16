@@ -109,9 +109,9 @@ Customize the widget’s appearance by passing a `customThemeToken` to `TantoPro
 
 ```tsx
 import { TantoProvider } from '@sky-mavis/tanto-widget';
-import type { TantoCustomTheme } from '@sky-mavis/tanto-widget';
+import type { TantoWidgetCustomTheme } from '@sky-mavis/tanto-widget';
 
-const customTheme: TantoCustomTheme = {
+const customTheme: TantoWidgetCustomTheme = {
   mode: 'light',
   fontFamily: ["'Nunito'", 'sans-serif'],
   fontSize: '1em',
@@ -135,7 +135,7 @@ function App() {
 }
 ```
 
-See `TantoCustomTheme` for a full list of theme tokens.
+See `TantoWidgetCustomTheme` for a full list of theme tokens.
 
 ### Custom Wallet Configuration
 

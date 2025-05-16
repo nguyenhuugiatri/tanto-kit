@@ -2,11 +2,11 @@ import { css, Global, ThemeProvider as EmotionThemeProvider } from '@emotion/rea
 import { type PropsWithChildren, useMemo } from 'react';
 
 import { tantoDarkTheme, tantoLightTheme } from '../../styles/theme';
-import type { TantoCustomTheme, TantoWidgetTheme } from '../../types/theme';
+import type { TantoWidgetCustomTheme, TantoWidgetTheme } from '../../types/theme';
 
 export interface ThemeProviderProps {
   theme?: TantoWidgetTheme['mode'];
-  customThemeToken?: TantoCustomTheme;
+  customThemeToken?: TantoWidgetCustomTheme;
 }
 
 export function ThemeProvider(props: PropsWithChildren<ThemeProviderProps>) {
