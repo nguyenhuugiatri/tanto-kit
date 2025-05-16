@@ -59,7 +59,7 @@ export const tantoDarkTheme: Theme = {
   linkColor: '#5294F8',
   dividerBorder: '1px dashed #353A45',
   listItemBackground: 'rgba(205, 213, 229, 0.07)',
-  listItemHoverBackground: 'rgba(2, 5, 10, 0.1)',
+  listItemHoverBackground: 'rgba(205, 213, 229, 0.1)',
   badgeDefaultColor: '#F1F3F9',
   badgeDefaultBackground: 'rgba(39, 43, 52, 0.60)',
   badgeHighlightColor: '#FBB2D0',

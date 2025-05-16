@@ -72,7 +72,7 @@ export const getDefaultConfig = ({
   chains = [ronin, saigon],
   multiInjectedProviderDiscovery = true,
   ...rest
-}: DefaultConfig): Config => {
+}: DefaultConfig = {}): Config => {
   const configParams: CreateConfigParameters = {
     chains,
     transports: createTransports(chains),
