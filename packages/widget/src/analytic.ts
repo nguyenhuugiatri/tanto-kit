@@ -1,6 +1,7 @@
 import { UAParser } from 'ua-parser-js';
 import { v4 } from 'uuid';
 
+import { ANALYTIC_PUBLIC_KEY } from './constants';
 import {
   type AnalyticBaseEventData,
   type AnalyticEventData,
@@ -9,7 +10,7 @@ import {
   type AnalyticStorageConfig,
   type AnalyticStorageData,
   AnalyticEventType,
-} from './types/analytics';
+} from './types/analytic';
 
 class AnalyticStorage {
   private static instance: AnalyticStorage;
@@ -162,7 +163,7 @@ class Analytic {
       this.handleNewSession(options);
     }
 
-    this.sendHeartbeat();
+    this.startHeartbeat();
   }
 
   private handleNewSession(options?: AnalyticOptions): void {
@@ -202,7 +203,7 @@ class Analytic {
     this.stopHeartbeat();
   }
 
-  sendHeartbeat(): void {
+  startHeartbeat(): void {
     if (!this.intervalId) {
       this.intervalId = setInterval(() => {
         this.sendEvent('heartbeat');
@@ -354,4 +355,4 @@ class Analytic {
   }
 }
 
-export const analytic = new Analytic('');
+export const analytic = new Analytic(ANALYTIC_PUBLIC_KEY);
