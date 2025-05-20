@@ -1,7 +1,7 @@
-import { WaypointScope } from '@sky-mavis/tanto-connect';
+import type { WaypointScope } from '@sky-mavis/tanto-connect';
 import { roninWallet, waypoint } from '@sky-mavis/tanto-wagmi';
-import { Chain, ronin, saigon } from 'viem/chains';
-import { Config, createConfig, CreateConfigParameters, CreateConnectorFn, http } from 'wagmi';
+import { type Chain, ronin, saigon } from 'viem/chains';
+import { type Config, type CreateConfigParameters, type CreateConnectorFn, createConfig, http } from 'wagmi';
 import { walletConnect } from 'wagmi/connectors';
 
 import { RONIN_WALLET_WEB_LINK } from './constants';
@@ -24,7 +24,7 @@ interface KeylessWalletConfig {
   popupCloseDelay?: number;
 }
 
-interface DefaultConfig extends Partial<Omit<CreateConfigParameters, 'client' | 'connectors'>> {
+interface TantoConfig extends Partial<Omit<CreateConfigParameters, 'client' | 'connectors'>> {
   appName?: string;
   appIcon?: string;
   appDescription?: string;
@@ -44,7 +44,7 @@ const createConnectors = ({
   appUrl = DEFAULT_WALLET_CONNECT_CONFIG.metadata.url,
   walletConnectProjectId = DEFAULT_WALLET_CONNECT_CONFIG.projectId,
   keylessWalletConfig,
-}: DefaultConfig) => {
+}: TantoConfig) => {
   const connectors: CreateConnectorFn[] = [
     roninWallet(),
     walletConnect({
@@ -62,7 +62,7 @@ const createConnectors = ({
   return connectors;
 };
 
-export const getDefaultConfig = ({
+export const createTantoConfig = ({
   appName,
   appIcon,
   appDescription,
@@ -72,7 +72,7 @@ export const getDefaultConfig = ({
   chains = [ronin, saigon],
   multiInjectedProviderDiscovery = true,
   ...rest
-}: DefaultConfig = {}): Config => {
+}: TantoConfig = {}): Config => {
   const configParams: CreateConfigParameters = {
     chains,
     transports: createTransports(chains),

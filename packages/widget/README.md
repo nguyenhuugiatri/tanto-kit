@@ -40,11 +40,11 @@ yarn add @sky-mavis/tanto-widget
 Wrap your application with the necessary providers (`WagmiProvider`, `QueryClientProvider`, and `TantoProvider`) to enable Tanto Widget functionality.
 
 ```tsx
-import { getDefaultConfig, TantoProvider } from '@sky-mavis/tanto-widget';
+import { createTantoConfig, TantoProvider } from '@sky-mavis/tanto-widget';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 
-const config = getDefaultConfig();
+const config = createTantoConfig();
 const queryClient = new QueryClient();
 
 function App() {
@@ -139,12 +139,12 @@ See `TantoWidgetCustomTheme` for a full list of theme tokens.
 
 ### Custom Wallet Configuration
 
-Customize wallet connection options via `getDefaultConfig`.
+Customize wallet connection options via `createTantoConfig`.
 
 ```tsx
-import { getDefaultConfig } from '@sky-mavis/tanto-widget';
+import { createTantoConfig } from '@sky-mavis/tanto-widget';
 
-const config = getDefaultConfig({
+const config = createTantoConfig({
   appName: 'My DApp',
   appIcon: 'https://my-dapp.com/icon.png',
   appDescription: 'A decentralized application for Web3 enthusiasts',
