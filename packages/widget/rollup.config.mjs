@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { babel } from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -9,9 +10,9 @@ import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import typescript from 'rollup-plugin-typescript2';
 
-import { version } from './package.json';
-
 const production = !process.env.ROLLUP_WATCH && process.env.NODE_ENV === 'production';
+
+const version = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version;
 
 const config = defineConfig({
   input: ['src/index.ts'],
@@ -77,7 +78,7 @@ const config = defineConfig({
     }),
     production && terser(),
     replace({
-      __buildVersion: version,
+      __buildVersion: `'${version}'`,
     }),
   ].filter(Boolean),
 });
