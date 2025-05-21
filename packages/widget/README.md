@@ -40,18 +40,20 @@ yarn add @sky-mavis/tanto-widget
 Wrap your application with the necessary providers (`WagmiProvider`, `QueryClientProvider`, and `TantoProvider`) to enable Tanto Widget functionality.
 
 ```tsx
-import { createTantoConfig, TantoProvider } from '@sky-mavis/tanto-widget';
+import { getDefaultConfig, TantoProvider } from '@sky-mavis/tanto-widget';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 
-const config = createTantoConfig();
+const config = getDefaultConfig();
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <TantoProvider>{/* Your App Components */}</TantoProvider>
+        <TantoProvider appId="YOUR_APPLICATION_ID_HERE">
+          {/* Your App Components */}
+        </TantoProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
@@ -124,13 +126,9 @@ const customTheme: TantoWidgetCustomTheme = {
 
 function App() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <TantoProvider customThemeToken={customTheme}>
-          {/* Your App */}
-        </TantoProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <TantoProvider customThemeToken={customTheme}>
+      {/* Your App */}
+    </TantoProvider>
   );
 }
 ```
@@ -139,12 +137,12 @@ See `TantoWidgetCustomTheme` for a full list of theme tokens.
 
 ### Custom Wallet Configuration
 
-Customize wallet connection options via `createTantoConfig`.
+Customize wallet connection options via `getDefaultConfig`.
 
 ```tsx
-import { createTantoConfig } from '@sky-mavis/tanto-widget';
+import { getDefaultConfig } from '@sky-mavis/tanto-widget';
 
-const config = createTantoConfig({
+const config = getDefaultConfig({
   appName: 'My DApp',
   appIcon: 'https://my-dapp.com/icon.png',
   appDescription: 'A decentralized application for Web3 enthusiasts',
@@ -180,6 +178,7 @@ Customize the widget’s behavior with the `config` prop.
 
 ```tsx
 <TantoProvider
+  appId="YOUR_APPLICATION_ID_HERE"
   config={{
     disableProfile: true,
     hideConnectSuccessPrompt: true,

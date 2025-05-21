@@ -62,7 +62,7 @@ const createConnectors = ({
   return connectors;
 };
 
-export const createTantoConfig = ({
+export const getDefaultConfig = ({
   appName,
   appIcon,
   appDescription,
