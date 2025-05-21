@@ -45,6 +45,7 @@ export interface AnalyticEventData {
 }
 
 export interface AnalyticOptions {
+  appId?: string;
   userId?: string;
   identifyAddress?: string;
   sessionTimeout?: number; // second
@@ -57,6 +58,7 @@ export interface AnalyticOptions {
 }
 
 export interface AnalyticStorageConfig {
+  appId?: string;
   userId?: string;
   identifyAddress?: string;
   /**

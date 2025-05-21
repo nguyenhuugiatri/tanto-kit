@@ -8,4 +8,5 @@ declare global {
     ethereum?: EIP1193Provider;
     isWalletApp?: boolean;
   }
+  const __buildVersion: string;
 }

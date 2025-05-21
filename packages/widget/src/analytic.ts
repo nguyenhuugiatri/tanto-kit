@@ -140,12 +140,18 @@ class Analytic {
   }
 
   updateSession(options?: AnalyticOptions): void {
-    const { sessionId: currentSessionId, userId: currentUser, identifyAddress } = this.storage.getConfig();
+    const {
+      sessionId: currentSessionId,
+      userId: currentUser,
+      identifyAddress,
+      appId: currentClientId,
+    } = this.storage.getConfig();
     const data = this.storage.getData();
-    const shouldUseCurrentSessionId = !options?.force && !!currentSessionId;
+    const shouldUseCurrentSessionId = !options?.force && !!currentSessionId && !!currentClientId;
     const sessionId = shouldUseCurrentSessionId ? currentSessionId : options?.sessionId || v4();
 
     this.storage.setConfig({
+      appId: currentClientId || options?.appId,
       userId: currentUser || options?.userId,
       identifyAddress: identifyAddress || options?.identifyAddress,
       sessionTimeout: options?.sessionTimeout,
