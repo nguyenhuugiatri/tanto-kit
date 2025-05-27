@@ -82,6 +82,7 @@ export function useWallets(): UseWalletsResult {
   const walletsByType = useMemo(() => {
     const walletMap = new Map(wallets.map(wallet => [wallet.id, wallet]));
     const safeWallet = isSafe ? walletMap.get(WALLET_IDS.SAFE) : null;
+    const embeddedWallet = walletMap.get(WALLET_IDS.EMBEDDED);
     const waypointWallet = walletMap.get(WALLET_IDS.WAYPOINT);
     const coinbaseWallet = walletMap.get(WALLET_IDS.COINBASE_WALLET);
     const wcWallet = walletMap.get(WALLET_IDS.WALLET_CONNECT);
@@ -108,6 +109,7 @@ export function useWallets(): UseWalletsResult {
     };
 
     return {
+      embeddedWallet,
       waypointWallet,
       roninExtensionWallet,
       roninMobileWallet,
@@ -120,8 +122,9 @@ export function useWallets(): UseWalletsResult {
   }, [wallets, isSafe]);
 
   const primaryWallets = useMemo(() => {
-    const { waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } = walletsByType;
-    if (deviceInfo.isDesktop) return [waypointWallet, roninExtensionWallet].filter(notEmpty);
+    const { embeddedWallet, waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } =
+      walletsByType;
+    if (deviceInfo.isDesktop) return [embeddedWallet, waypointWallet, roninExtensionWallet].filter(notEmpty);
     if (deviceInfo.isMobile && !deviceInfo.isRoninInAppBrowser)
       return [waypointWallet, roninMobileWallet].filter(notEmpty);
     if (deviceInfo.isRoninInAppBrowser) return [roninInAppBrowserWallet].filter(notEmpty);

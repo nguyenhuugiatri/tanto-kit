@@ -13,7 +13,7 @@ import { useWidgetRouter } from '../../../hooks/useWidgetRouter';
 import { useWidgetUIConfig } from '../../../hooks/useWidgetUIConfig';
 import { Route } from '../../../types/route';
 import { Wallet } from '../../../types/wallet';
-import { isInjectedConnector, isWaypointConnector, isWCConnector } from '../../../utils';
+import { isEmbeddedConnector, isInjectedConnector, isWaypointConnector, isWCConnector } from '../../../utils';
 
 interface WalletItemProps {
   wallet: Wallet;
@@ -127,7 +127,9 @@ export const WalletItem = ({ wallet }: WalletItemProps) => {
     }
     setSelectedWallet(wallet);
     sendAnalyticEvent();
-    goTo(isWCConnector(id) ? Route.CONNECT_WC : Route.CONNECT_INJECTOR, { title: name });
+    if (isEmbeddedConnector(id)) return goTo(Route.CONNECT_EMBEDDED, { title: name });
+    if (isWCConnector(id)) return goTo(Route.CONNECT_WC, { title: name });
+    return goTo(Route.CONNECT_INJECTOR, { title: name });
   }, [wallet, setSelectedWallet, goTo, isInstalled, homepage, id, name, sendAnalyticEvent]);
 
   const handleKeyDown = useCallback(

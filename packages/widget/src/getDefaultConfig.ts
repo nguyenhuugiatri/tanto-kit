@@ -12,6 +12,7 @@ import {
 } from 'wagmi/connectors';
 
 import { RONIN_WALLET_WEB_LINK } from './constants';
+import { embeddedConnector } from './libs/embedded/connector';
 import { getVersionInfo } from './utils';
 
 export const RONIN_WALLET_METADATA = {
@@ -84,6 +85,8 @@ const createRoninConnector = (): CreateConnectorFn => roninWallet();
 
 const createSafeConnector = (): CreateConnectorFn => safe();
 
+const createEmbeddedConnector = (): CreateConnectorFn => embeddedConnector();
+
 const createWaypointConnector = (config: DefaultConfig['keylessWalletConfig']): CreateConnectorFn =>
   waypoint({
     source: getVersionInfo(),
@@ -120,7 +123,7 @@ const createCoinbaseConnector = (
 
 export const createConnectors = (config: DefaultConfig): CreateConnectorFn[] => {
   const appMetadata = createAppMetadata(config.appMetadata);
-  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector()];
+  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector(), createEmbeddedConnector()];
   const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig } = config;
   if (keylessWalletConfig?.enable !== false)
     connectors.push(createWaypointConnector(omit(keylessWalletConfig, 'enable')));

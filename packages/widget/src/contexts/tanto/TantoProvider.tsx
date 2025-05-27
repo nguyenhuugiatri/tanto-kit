@@ -9,6 +9,7 @@ import { useConnectorRequestAnalyticInterceptor } from '../../hooks/useConnector
 import { usePreloadTantoImages } from '../../hooks/usePreloadImages';
 import { useSolveRoninConnectionConflict } from '../../hooks/useSolveRoninConnectionConflict';
 import { useWalletConnectListener } from '../../hooks/useWalletConnectListener';
+import { EmbeddedProvider } from '../../libs/embedded/context';
 import { AccountConnectionCallback } from '../../types/connect';
 import { isMobile } from '../../utils';
 import { openWindow } from '../../utils/openWindow';
@@ -82,11 +83,19 @@ export function TantoProvider({
   return (
     <TantoContext.Provider value={contextValue}>
       <ThemeProvider theme={theme} customThemeToken={customThemeToken}>
-        <MotionConfig reducedMotion={config.reducedMotion ? 'always' : 'never'}>
-          <LazyMotion features={domAnimation} strict>
-            <WidgetModalProvider>{children}</WidgetModalProvider>
-          </LazyMotion>
-        </MotionConfig>
+        <EmbeddedProvider
+          clientId="id"
+          waypointOrigin="https://id-dev.skymavis.one"
+          chainId={2021}
+          timeout={10_000}
+          logger={console.log}
+        >
+          <MotionConfig reducedMotion={config.reducedMotion ? 'always' : 'never'}>
+            <LazyMotion features={domAnimation} strict>
+              <WidgetModalProvider>{children}</WidgetModalProvider>
+            </LazyMotion>
+          </MotionConfig>
+        </EmbeddedProvider>
       </ThemeProvider>
     </TantoContext.Provider>
   );
