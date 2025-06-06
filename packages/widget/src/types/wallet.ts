@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Connector } from 'wagmi';
 
 export const WALLET_IDS = {
-  EMBEDDED: 'EMBEDDED',
+  EMBEDDED: 'embedded',
   WAYPOINT: 'WAYPOINT',
   RONIN_WALLET: 'RONIN_WALLET',
   RONIN_WALLET_INJECTED: 'com.roninchain.wallet',

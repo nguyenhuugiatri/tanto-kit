@@ -41,19 +41,19 @@ export abstract class MessageCommunicator<P extends MessagePayload> {
     }
   }
 
+  private isPingMessage(message: Message): boolean {
+    return message.method === MessageMethod.Ping && message.type === MessageType.Request;
+  }
+
   protected handleMessage(event: MessageEvent): void {
     const message = event.data;
     if (!isValidMessage(message)) return;
-    if (message.method !== MessageMethod.Ping) this.log(`🔷 | Received message: ${JSON.stringify(message)}`);
     if (this.isPingMessage(message)) {
       this.handlePingPongExchange(event, message);
       return;
     }
+    this.log(`🔷 | Received message: ${JSON.stringify(message)}`);
     this.resolveAndEmitMessage(message);
-  }
-
-  private isPingMessage(message: Message): boolean {
-    return message.method === MessageMethod.Ping && message.type === MessageType.Request;
   }
 
   private handlePingPongExchange(event: MessageEvent, message: Message<P>): void {

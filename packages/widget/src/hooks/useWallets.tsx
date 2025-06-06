@@ -7,6 +7,7 @@ import { Wallet, WALLET_IDS } from '../types/wallet';
 import {
   isCoinbaseConnector,
   isDesktop,
+  isEmbeddedConnector,
   isInjectedConnector,
   isMobile,
   isRoninExtensionInstalled,
@@ -40,6 +41,7 @@ const getWalletInstallationStatus = (
   return (
     isSafeConnector(id) ||
     isCoinbaseConnector(id) ||
+    isEmbeddedConnector(id) ||
     isWaypointConnector(id) ||
     isWCConnector(id) ||
     isInjectedConnector(type)
