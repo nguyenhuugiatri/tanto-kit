@@ -1,5 +1,6 @@
 import { View } from '../contexts/widget-router/WidgetRouterContext';
 import { Route } from '../types/route';
+import { ConnectEmbedded } from '../views/Connect/ConnectEmbedded';
 import { ConnectInjector } from '../views/Connect/ConnectInjector';
 import { ConnectWC } from '../views/Connect/ConnectWC';
 import { Profile } from '../views/Profile/Profile';
@@ -43,6 +44,10 @@ export const viewConfigs: Record<Route, View> = {
   [Route.CONNECT_WC]: {
     route: Route.CONNECT_WC,
     content: <ConnectWC />,
+  },
+  [Route.CONNECT_EMBEDDED]: {
+    route: Route.CONNECT_EMBEDDED,
+    content: <ConnectEmbedded />,
   },
   [Route.PROFILE]: {
     route: Route.PROFILE,

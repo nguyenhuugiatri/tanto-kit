@@ -52,6 +52,8 @@ export const isDesktop = () => !isMobile();
 
 export const isInjectedConnector = (connectorType?: string) => connectorType === 'injected';
 
+export const isEmbeddedConnector = (connectorId?: string) => connectorId === WALLET_IDS.EMBEDDED;
+
 export const isRoninWallet = (connectorId?: string) => connectorId === WALLET_IDS.RONIN_WALLET;
 
 export const isRoninWalletInjected = (connectorId?: string) => connectorId === WALLET_IDS.RONIN_WALLET_INJECTED;

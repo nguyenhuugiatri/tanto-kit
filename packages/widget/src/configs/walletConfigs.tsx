@@ -14,6 +14,16 @@ import { RONIN_WALLET_WEB_LINK } from '../constants';
 import { WALLET_IDS, WalletConfig, WalletId } from '../types/wallet';
 
 export const walletConfigs: Record<WalletId, WalletConfig> = {
+  [WALLET_IDS.EMBEDDED]: {
+    name: 'Embedded',
+    icon: <RoninWaypointCustomSquareLogo />,
+    displayOptions: {
+      thumbnail: <RoninWaypointCustomLogo />,
+      highlightBackground: true,
+      showRoninBadge: true,
+      connectingDescription: 'Confirm connection via pop-up windows',
+    },
+  },
   [WALLET_IDS.WAYPOINT]: {
     name: 'Continue with Email',
     icon: <RoninWaypointCustomSquareLogo />,

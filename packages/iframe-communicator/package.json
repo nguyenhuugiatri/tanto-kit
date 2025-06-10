@@ -1,0 +1,71 @@
+{
+  "name": "@sky-mavis/tanto-iframe-communicator",
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Tanto Iframe Communicator",
+  "author": "SkyMavis",
+  "license": "MIT",
+  "homepage": "https://github.com/skymavis/tanto-kit",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:skymavis/tanto-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/skymavis/tanto-kit/issues"
+  },
+  "keywords": [
+    "Tanto",
+    "Iframe",
+    "Communicator"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/mjs/index.mjs",
+      "require": "./dist/cjs/index.cjs",
+      "default": "./dist/mjs/index.mjs"
+    },
+    "./package.json": "./package.json",
+    "./*": {
+      "types": "./dist/types/*.d.ts",
+      "import": "./dist/mjs/*.mjs",
+      "require": "./dist/cjs/*.cjs",
+      "default": "./dist/mjs/*.mjs"
+    }
+  },
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/mjs/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && NODE_ENV=production && rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "node ./node_modules/eslint/bin/eslint ../.. --ext .js --fix",
+    "lint:fix": "eslint ../.. --ext .js,.tsx,.ts --fix",
+    "test": "jest"
+  },
+  "dependencies": {
+    "eventemitter2": "6.4.9",
+    "uuid": "11.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "29.5.11",
+    "@types/node": "22.7.5",
+    "@typescript-eslint/eslint-plugin": "6.21.0",
+    "@typescript-eslint/parser": "6.21.0",
+    "eslint": "8.30.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-simple-import-sort": "8.0.0",
+    "jest": "29.7.0",
+    "prettier": "2.8.1",
+    "rollup": "4.40.0",
+    "rollup-plugin-typescript2": "0.34.0",
+    "ts-jest": "29.1.2",
+    "typescript": "5.8.3"
+  }
+}
