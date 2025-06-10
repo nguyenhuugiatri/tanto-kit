@@ -1,13 +1,13 @@
+import { HostCommunicator } from '@sky-mavis/tanto-iframe-communicator';
 import { createConnector } from '@wagmi/core';
 
-import { HostCommunicator } from '../communicator';
 import { whoAmI } from './actions';
 import { EmbeddedMessage } from './embedded-message';
 import { EmbeddedProvider } from './provider/embedded-provider';
 
 export function embeddedConnector() {
   const communicator = HostCommunicator.getInstance<EmbeddedMessage>({
-    logger: console.log,
+    logger: console.debug,
   });
   const provider = new EmbeddedProvider({ communicator });
 

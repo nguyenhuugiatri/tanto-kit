@@ -1,8 +1,8 @@
 import { EventEmitter2 } from 'eventemitter2';
 
-import { Deferred } from '../defer';
-import { Disposable } from '../disposable';
 import { PING_PONG_INTERVAL_MS } from './constants';
+import { Deferred } from './defer';
+import { Disposable } from './disposable';
 import { CommunicatorError, ErrorCodes } from './errors';
 import { generateMessageId, isValidMessage, isWindow } from './helpers';
 import type {
@@ -48,11 +48,11 @@ export abstract class MessageCommunicator<P extends MessagePayload> {
   protected handleMessage(event: MessageEvent): void {
     const message = event.data;
     if (!isValidMessage(message)) return;
+    if (message.method !== MessageMethod.Ping) this.log(`🔷 | Received message: ${JSON.stringify(message)}`);
     if (this.isPingMessage(message)) {
       this.handlePingPongExchange(event, message);
       return;
     }
-    this.log(`🔷 | Received message: ${JSON.stringify(message)}`);
     this.resolveAndEmitMessage(message);
   }
 

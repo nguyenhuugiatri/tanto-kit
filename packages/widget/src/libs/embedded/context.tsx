@@ -1,10 +1,9 @@
+import { CommunicatorOptions, HostCommunicator } from '@sky-mavis/tanto-iframe-communicator';
 import { useQuery } from '@tanstack/react-query';
 import type { CSSProperties, ReactNode } from 'react';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ronin } from 'viem/chains';
 
-import type { CommunicatorOptions } from '../communicator';
-import { HostCommunicator } from '../communicator';
 import { whoAmI } from './actions';
 import { Account } from './embedded-auth';
 import { EmbeddedMessage } from './embedded-message';

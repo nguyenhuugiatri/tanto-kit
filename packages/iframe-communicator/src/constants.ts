@@ -3,4 +3,4 @@ export const MAX_PING_PONG_ATTEMPTS = 25;
 export const CHECK_ALIVE_TIMEOUT_MS = 2_000;
 export const ALIVE_INTERVAL_MS = CHECK_ALIVE_TIMEOUT_MS + PING_PONG_INTERVAL_MS * (MAX_PING_PONG_ATTEMPTS + 1);
 export const CONNECT_TIMEOUT = 20_000;
-export const CONNECTED_EVENT = 'waypoint::ready';
+export const CONNECTED_EVENT = 'tanto-iframe-connected';

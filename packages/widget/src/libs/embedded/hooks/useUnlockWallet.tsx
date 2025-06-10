@@ -1,9 +1,8 @@
+import { Deferred, generateMessageId } from '@sky-mavis/tanto-iframe-communicator';
 import { useMutation } from '@tanstack/react-query';
 import type { IframeHTMLAttributes } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { generateMessageId } from '../../communicator/helpers';
-import { Deferred } from '../../defer';
 import { WindowMessage } from '../embedded-message';
 import { mutationKeys } from '../queries';
 import { useEmbedded } from './internal/useEmbedded';

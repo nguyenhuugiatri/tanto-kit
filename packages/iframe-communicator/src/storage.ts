@@ -1,4 +1,4 @@
-const DEFAULT_PREFIX = 'tanto.EMBEDDED.';
+const DEFAULT_PREFIX = 'tanto.IFRAME_COMMUNICATOR.';
 
 class LocalStorage<K extends string> {
   private prefix: string;
