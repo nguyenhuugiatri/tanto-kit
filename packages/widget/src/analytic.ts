@@ -11,6 +11,7 @@ import {
   AnalyticEventType,
 } from './types/analytic';
 import { getUserAgent, isClient } from './utils';
+import { request } from './utils/request';
 
 class AnalyticStorage {
   private static instance: AnalyticStorage;
@@ -331,13 +332,10 @@ class Analytic {
   }
 
   private async send(events: Array<AnalyticEventData>): Promise<Response> {
-    return fetch('https://x.skymavis.com/track', {
+    return request('https://x.skymavis.com/track', {
       method: 'POST',
-      headers: [
-        ['Authorization', `Basic ${btoa(`${this.apiKey}:`)}`],
-        ['Content-Type', 'application/json'],
-      ],
-      body: JSON.stringify({ events }),
+      headers: [['Authorization', `Basic ${btoa(`${this.apiKey}:`)}`]],
+      body: { events },
     });
   }
 
