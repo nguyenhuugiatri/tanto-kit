@@ -37,26 +37,26 @@ const ConnectedTitle = <p css={{ width: '100%', textAlign: 'center' }}>Connected
 export const viewConfigs: Record<Route, View> = {
   [Route.WALLETS]: {
     route: Route.WALLETS,
-    content: <WalletList />,
+    content: <WalletList minWidth={380} />,
     title: WalletTitle,
     showBackButton: false,
   },
   [Route.KEYLESS]: {
     route: Route.KEYLESS,
-    content: <Keyless />,
+    content: <Keyless minWidth={340} />,
     showBackButton: false,
   },
   [Route.CONNECT_INJECTOR]: {
     route: Route.CONNECT_INJECTOR,
-    content: <ConnectInjector />,
+    content: <ConnectInjector minWidth={348} />,
   },
   [Route.CONNECT_WC]: {
     route: Route.CONNECT_WC,
-    content: <ConnectWC />,
+    content: <ConnectWC minWidth={348} />,
   },
   [Route.PROFILE]: {
     route: Route.PROFILE,
-    content: <Profile />,
+    content: <Profile minWidth={348} />,
     title: ConnectedTitle,
   },
 };
