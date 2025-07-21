@@ -13,7 +13,7 @@ import { StepSuccess } from './components/StepSuccess';
 enum Step {
   SELECT_METHOD = 1,
   OTP = 2,
-  MIGRATE_PASSWORD_LESS = 3,
+  MIGRATE_PASSWORDLESS = 3,
   CREATE_NEW_KEYLESS_WALLET = 4,
   SUCCESS = 5,
 }
@@ -27,15 +27,15 @@ interface PasswordLessFormData {
 }
 
 export function Keyless(props: BoxProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(Step.SELECT_METHOD);
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const { goBack: goBackRouter } = useWidgetRouter();
 
   const next = (nextStep: Step) => setStep(nextStep);
   const back = () => {
     if (step === Step.SELECT_METHOD) return goBackRouter();
-    if (step === Step.MIGRATE_PASSWORD_LESS) return setStep(Step.SELECT_METHOD);
+    if (step === Step.MIGRATE_PASSWORDLESS) return setStep(Step.SELECT_METHOD);
     return setStep(step - 1);
   };
 
@@ -51,7 +51,7 @@ export function Keyless(props: BoxProps) {
 
     const randomStep =
       Math.random() > 0.5
-        ? Step.MIGRATE_PASSWORD_LESS
+        ? Step.MIGRATE_PASSWORDLESS
         : Math.random() > 0.5
         ? Step.CREATE_NEW_KEYLESS_WALLET
         : Step.SUCCESS;
@@ -81,7 +81,7 @@ export function Keyless(props: BoxProps) {
         {step === Step.OTP && (
           <StepOTP email={email} onOTPSubmit={handleSubmitOTP} onResend={handleResend} isLoading={isLoading} />
         )}
-        {step === Step.MIGRATE_PASSWORD_LESS && <StepMigratePassword onSubmit={handlePasswordlessSubmit} />}
+        {step === Step.MIGRATE_PASSWORDLESS && <StepMigratePassword onSubmit={handlePasswordlessSubmit} />}
         {step === Step.CREATE_NEW_KEYLESS_WALLET && <StepCreatingKeyless />}
         {step === Step.SUCCESS && <StepSuccess />}
       </TransitionedView>

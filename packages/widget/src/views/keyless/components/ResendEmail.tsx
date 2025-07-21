@@ -1,15 +1,30 @@
-import { useTheme } from '@emotion/react';
+import styled from '@emotion/styled';
 import { useEffect } from 'react';
 
 import { useCountdown } from '../../../hooks/useCountdown';
 
 export interface ResendEmailProps {
-  onResend?: () => void | Promise<void>;
   pendingTime?: number;
   className?: string;
   label?: string;
   resendText?: string;
+  onResend?: () => void;
 }
+
+const Container = styled.div(({ theme }) => ({
+  fontSize: 14,
+  color: theme.mutedText,
+  textAlign: 'center',
+}));
+
+const ResendButton = styled.span(({ theme }) => ({
+  cursor: 'pointer',
+  color: theme.linkColor,
+}));
+
+const Timer = styled.span({
+  fontVariantNumeric: 'tabular-nums',
+});
 
 export function ResendEmail({
   onResend,
@@ -18,7 +33,6 @@ export function ResendEmail({
   label = "Didn't get an email?",
   resendText = 'Resend code',
 }: ResendEmailProps) {
-  const theme = useTheme();
   const [count, { startCountdown, resetCountdown }] = useCountdown({ countStart: pendingTime });
 
   useEffect(() => {
@@ -32,18 +46,15 @@ export function ResendEmail({
   };
 
   return (
-    <div css={{ color: theme.mutedText, fontSize: 14, textAlign: 'center', ...(className && { className }) }}>
+    <Container className={className}>
       {label}{' '}
       {count === 0 ? (
-        <span css={{ cursor: 'pointer', color: theme.linkColor }} onClick={resendHandler}>
-          {resendText}
-        </span>
+        <ResendButton onClick={resendHandler}>{resendText}</ResendButton>
       ) : (
         <>
-          Send a new code in{' '}
-          <span css={{ fontVariantNumeric: 'tabular-nums' }}>{`0${Math.floor(count)}`.slice(-2)}s</span>
+          Send a new code in <Timer>{`0${Math.floor(count)}`.slice(-2)}s</Timer>
         </>
       )}
-    </div>
+    </Container>
   );
 }

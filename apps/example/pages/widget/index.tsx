@@ -23,7 +23,7 @@ export default function WidgetExample() {
           theme={getTheme()}
           config={{
             clientId: '51623f93-6fa6-49d9-972f-c2d07bcab985',
-            createAccountOnConnect: true,
+            // createAccountOnConnect: true,
             __internal_baseUrl: 'https://waypoint-api.skymavis.one/v1/rpc/public',
           }}
         >

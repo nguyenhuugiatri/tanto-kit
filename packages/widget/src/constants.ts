@@ -23,6 +23,7 @@ export const DRAWER_VISIBILITY_TRANSITION_DURATION = 500;
 export const TRANSITION_DURATION = 200;
 
 // UI
+export const DIALOG_MIN_WIDTH = 420;
 export const WALLET_ITEM_HEIGHT = 68;
 export const MAX_WALLET_ITEMS_PER_GROUP = 4;
 export const MOBILE_BREAKPOINT = 576;

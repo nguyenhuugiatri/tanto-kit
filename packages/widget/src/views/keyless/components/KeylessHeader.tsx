@@ -1,3 +1,5 @@
+import styled from '@emotion/styled';
+
 import { ArrowLeftIcon } from '../../../assets/ArrowLeftIcon';
 import { RoninLogo } from '../../../assets/RoninLogo';
 import { TransitionedView } from '../../../components/animated-containers/TransitionedView';
@@ -14,6 +16,17 @@ export interface KeylessHeaderProps {
   onBack?: () => void;
 }
 
+const StyledRoninLogo = styled(RoninLogo)({
+  width: 48,
+  height: 48,
+});
+
+const Title = styled.p({
+  fontSize: 20,
+  fontWeight: 600,
+  textAlign: 'center',
+});
+
 export function KeylessHeader({
   title,
   step,
@@ -29,7 +42,7 @@ export function KeylessHeader({
       )}
 
       <TransitionedView viewKey={`${showLogo}-${title}`}>
-        <Box vertical align="center" gap={20} pt={20}>
+        <Box vertical align="center" pt={20} gap={20}>
           <SimpleStepper step={step} total={totalSteps} />
           <KeylessTitle title={title} showLogo={showLogo} />
         </Box>
@@ -47,19 +60,9 @@ function KeylessTitle({ title, showLogo }: KeylessTitleProps) {
   if (!title && !showLogo) return null;
 
   return (
-    <Box vertical gap={16} align="center">
-      {showLogo && <RoninLogo css={{ width: 48, height: 48 }} />}
-      {title && (
-        <p
-          css={{
-            fontSize: 20,
-            fontWeight: 600,
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </p>
-      )}
+    <Box gap={16} align="center" vertical>
+      {showLogo && <StyledRoninLogo />}
+      {title && <Title>{title}</Title>}
     </Box>
   );
 }

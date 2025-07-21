@@ -1,22 +1,37 @@
-import { useTheme } from '@emotion/react';
+import styled from '@emotion/styled';
 
 import { Hourglass } from '../../../assets/Hourglass';
 import { Box } from '../../../components/box/Box';
 import { DotLoading } from '../../../components/dot-loading/DotLoading';
 
-export function StepCreatingKeyless() {
-  const theme = useTheme();
+const StyledHourglass = styled(Hourglass)({
+  marginBottom: 32,
+});
 
+const Title = styled.p({
+  fontSize: 20,
+  fontWeight: 600,
+  lineHeight: '14px',
+  textAlign: 'center',
+});
+
+const Description = styled.p(({ theme }) => ({
+  fontSize: 14,
+  fontWeight: 400,
+  color: theme.mutedText,
+  maxWidth: 340,
+  textAlign: 'center',
+}));
+
+export function StepCreatingKeyless() {
   return (
-    <Box fullWidth vertical align="center" css={{ textAlign: 'center' }}>
-      <Hourglass css={{ marginBottom: 32 }} />
+    <Box fullWidth vertical align="center" pb={12}>
+      <StyledHourglass />
       <Box gap={4} mb={8} align="flex-end">
-        <p css={{ fontSize: 20, fontWeight: 600, lineHeight: '14px' }}>Creating wallet</p>
+        <Title>Creating wallet</Title>
         <DotLoading />
       </Box>
-      <p css={{ fontSize: 14, fontWeight: 400, color: theme.mutedText, maxWidth: 340, marginBottom: 12 }}>
-        Please keep this page open.
-      </p>
+      <Description>Please keep this page open.</Description>
     </Box>
   );
 }

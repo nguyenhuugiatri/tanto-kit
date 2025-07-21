@@ -1,4 +1,4 @@
-import { useTheme } from '@emotion/react';
+import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { composeRefs } from '@radix-ui/react-compose-refs';
 import { useEffect, useRef } from 'react';
@@ -20,9 +20,31 @@ export interface StepMigratePasswordProps {
   onSubmit: (data: PasswordLessFormData) => void;
 }
 
+const Title = styled.h1({
+  fontSize: 20,
+  fontWeight: 600,
+  textAlign: 'center',
+});
+
+const Description = styled.p(({ theme }) => ({
+  fontSize: 14,
+  fontWeight: 400,
+  color: theme.mutedText,
+  maxWidth: 340,
+  textAlign: 'center',
+}));
+
+const Form = styled.form({
+  width: '100%',
+});
+
+const StyledInput = styled(Input)({
+  width: '100%',
+  marginBottom: 16,
+});
+
 export function StepMigratePassword({ onSubmit }: StepMigratePasswordProps) {
-  const theme = useTheme();
-  const passwordLessInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     control,
@@ -37,31 +59,27 @@ export function StepMigratePassword({ onSubmit }: StepMigratePasswordProps) {
   });
 
   useEffect(() => {
-    setTimeout(() => {
-      if (passwordLessInputRef.current) {
-        passwordLessInputRef.current.focus();
-      }
+    const timeout = setTimeout(() => {
+      inputRef.current?.focus();
     }, TRANSITION_DURATION * 1.5);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
-    <Box fullWidth vertical align="center" css={{ textAlign: 'center' }}>
-      <h1 css={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>Account migration</h1>
-      <div css={{ marginBottom: 48 }}>
-        <p css={{ fontSize: 14, fontWeight: 400, color: theme.mutedText, maxWidth: 340 }}>
-          Your account needs to be recovered to passwordless authentication.
-        </p>
-      </div>
-      <form css={{ width: '100%' }} onSubmit={handleSubmit(onSubmit)}>
+    <Box fullWidth vertical align="center" gap={48}>
+      <Box vertical align="center" gap={4}>
+        <Title>Account migration</Title>
+        <Description>Your account needs to be recovered to passwordless authentication.</Description>
+      </Box>
+      <Form onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="password"
           control={control}
           render={({ field }) => {
             const { ref, ...rest } = field;
             return (
-              <Input
-                ref={composeRefs(passwordLessInputRef, ref)}
-                css={{ width: '100%', marginBottom: 16 }}
+              <StyledInput
+                ref={composeRefs(inputRef, ref)}
                 placeholder="Recovery password"
                 error={errors.password?.message}
                 {...rest}
@@ -72,7 +90,7 @@ export function StepMigratePassword({ onSubmit }: StepMigratePasswordProps) {
         <Button disabled={!isValid} fullWidth type="submit">
           Continue
         </Button>
-      </form>
+      </Form>
     </Box>
   );
 }

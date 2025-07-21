@@ -90,7 +90,7 @@ const Content = forwardRef<ElementRef<typeof Dialog.Content>, Dialog.DialogConte
     const theme = useTheme();
     return (
       <ContentComponent ref={ref} css={{ backgroundColor: theme.modalBackground }} {...props}>
-        <div css={{ position: 'relative' }}>{children}</div>
+        <div css={{ position: 'relative', overflow: 'hidden' }}>{children}</div>
       </ContentComponent>
     );
   },

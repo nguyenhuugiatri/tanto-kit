@@ -1,6 +1,7 @@
 import { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 
+import { TRANSITION_DURATION } from '../../constants';
 import type { ButtonProps } from './Button.types';
 
 function getIntentStyles(theme: Theme, intent?: string) {
@@ -121,7 +122,7 @@ export const StyledButton = styled.button<ButtonProps>(
     display: 'inline-flex',
     justifyContent: 'center',
     alignItems: 'center',
-    transition: 'all 150ms cubic-bezier(0.25, 0.1, 0.25, 1)',
+    transition: `all ${TRANSITION_DURATION}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
     border: 'none',
     outline: 'none',
     textDecoration: 'none',

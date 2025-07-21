@@ -1,3 +1,4 @@
+import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,12 +15,22 @@ const emailSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>;
 
 export interface StepSelectProviderProps {
-  onSubmit: (data: EmailFormData) => void;
   defaultEmail?: string;
+  onSubmit: (data: EmailFormData) => void;
 }
 
-export function StepSelectProvider({ onSubmit, defaultEmail = '' }: StepSelectProviderProps) {
+const Form = styled.form({
+  display: 'flex',
+  flexDirection: 'column',
+  marginTop: 32,
+  gap: 16,
+});
+
+export function StepSelectProvider(props: StepSelectProviderProps) {
+  const { onSubmit, defaultEmail = '' } = props;
+
   const inputRef = useRef<HTMLInputElement>(null);
+
   const {
     control,
     handleSubmit,
@@ -36,22 +47,20 @@ export function StepSelectProvider({ onSubmit, defaultEmail = '' }: StepSelectPr
   const email = watch('email');
 
   useEffect(() => {
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+    const timeout = setTimeout(() => {
+      inputRef.current?.focus();
     }, TRANSITION_DURATION * 1.5);
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <Form onSubmit={handleSubmit(onSubmit)}>
       <Controller
         name="email"
         control={control}
         render={({ field }) => (
           <Input
             ref={inputRef}
-            css={{ marginBottom: 16 }}
             placeholder="your@gmail.com"
             error={errors.email?.message}
             value={field.value}
@@ -62,6 +71,6 @@ export function StepSelectProvider({ onSubmit, defaultEmail = '' }: StepSelectPr
       <Button disabled={!email || !isValid} fullWidth type="submit">
         Continue
       </Button>
-    </form>
+    </Form>
   );
 }

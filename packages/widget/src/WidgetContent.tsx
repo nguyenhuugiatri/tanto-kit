@@ -3,7 +3,6 @@ import { useBalance } from 'wagmi';
 
 import { ArrowLeftIcon } from './assets/ArrowLeftIcon';
 import { SmoothHeight } from './components/animated-containers/SmoothHeight';
-import { SmoothWidth } from './components/animated-containers/SmoothWidth';
 import { TransitionedView } from './components/animated-containers/TransitionedView';
 import { Box } from './components/box/Box';
 import { IconButton } from './components/button/Button';
@@ -60,12 +59,10 @@ export function WidgetContent() {
   return (
     <CSSReset>
       <SmoothHeight>
-        {/* <SmoothWidth> */}
         <WidgetContentHeader />
         <WidgetConnectProvider>
           <TransitionedView viewKey={view.route}>{view.content}</TransitionedView>
         </WidgetConnectProvider>
-        {/* </SmoothWidth> */}
       </SmoothHeight>
     </CSSReset>
   );

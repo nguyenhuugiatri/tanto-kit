@@ -18,7 +18,7 @@ const StyledDescription = styled.div(({ theme }) => ({
 
 export function StepSuccess() {
   return (
-    <Box fullWidth vertical align="center" mb={12} gap={30}>
+    <Box fullWidth vertical align="center" mb={12} gap={28}>
       <HighFive />
       <Box vertical align="center" gap={4}>
         <StyledTitle>All set!</StyledTitle>
