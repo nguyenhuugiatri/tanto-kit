@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box, BoxProps } from '../../components/box/Box';
+import { DELAY_CONNECT } from '../../constants';
 import { useTantoConfig } from '../../contexts/tanto/useTantoConfig';
 import { useWidgetConnect } from '../../contexts/widget-connect/useWidgetConnect';
 import { useWidgetRouter } from '../../contexts/widget-router/useWidgetRouter';
+import { useConnectAndAuth } from '../../hooks/useConnectAndAuth';
 import { mutation } from '../../services/queries';
 import { Route } from '../../types/route';
 import { getSecondsFromMessage } from '../../utils/string';
+import { PwdlessProvider } from '../../web3/PwdlessProvider';
 import { KeylessHeader } from './components/KeylessHeader';
 import { StepCreatingKeyless } from './components/StepCreatingKeyless';
 import { StepOTP } from './components/StepOTP';
@@ -44,7 +47,8 @@ export function Keyless(props: BoxProps) {
   const { goBack: goBackRouter, goTo: goToRouter } = useWidgetRouter();
   const { clientId = '', __internal_baseUrl } = useTantoConfig();
   const [waitSeconds, setWaitSeconds] = useState(0);
-  const { waypointWallet, setSelectedWallet } = useWidgetConnect();
+  const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
+  const { connect: connectKeyless } = useConnectAndAuth({ connector: selectedConnector });
 
   const {
     mutateAsync: authenticateWithOTP,
@@ -91,7 +95,7 @@ export function Keyless(props: BoxProps) {
     const { accessToken } = await authenticateWithOTP({ baseUrl: __internal_baseUrl, clientId, email, otp: _code });
     localStorage.setItem('accessToken', accessToken);
     try {
-      const { preferMethod } = await getUserProfile({
+      const { address, preferMethod } = await getUserProfile({
         baseUrl: PWDLESS_BASE_URL,
         accessToken,
       });
@@ -100,6 +104,10 @@ export function Keyless(props: BoxProps) {
         setSelectedWallet(waypointWallet);
         goToRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
       }
+      connectKeyless();
+      setTimeout(() => {
+        PwdlessProvider.resolveConnect(address, accessToken);
+      });
       setStep(Step.SUCCESS);
     } catch {
       setStep(Step.CREATE_NEW_KEYLESS_WALLET);
@@ -115,10 +123,11 @@ export function Keyless(props: BoxProps) {
         baseUrl: PWDLESS_BASE_URL,
         socketUrl: KEYGEN_SOCKET_URL,
       });
-      await getUserProfile({
+      const { address } = await getUserProfile({
         baseUrl: PWDLESS_BASE_URL,
         accessToken,
       });
+      PwdlessProvider.resolveConnect(address, accessToken);
       setStep(Step.SUCCESS);
     } catch {}
   };
@@ -132,6 +141,8 @@ export function Keyless(props: BoxProps) {
     resetAuthenticateWithOTP();
     setWaitSeconds(0);
   }, [email]);
+
+  useEffect(() => {}, [step]);
 
   const showBackButton = ![Step.SUCCESS, Step.CREATE_NEW_KEYLESS_WALLET].includes(step);
   const showLogo = step === Step.SELECT_METHOD;

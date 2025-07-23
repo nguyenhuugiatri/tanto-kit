@@ -27,6 +27,8 @@ export const isWCConnector = (connectorId?: string) => connectorId === WALLET_ID
 
 export const isWaypointConnector = (connectorId?: string) => connectorId === WALLET_IDS.WAYPOINT;
 
+export const isPwdlessConnector = (connectorId?: string) => connectorId === WALLET_IDS.PWDLESS;
+
 export const isSafeConnector = (connectorId?: string) => connectorId === WALLET_IDS.SAFE;
 
 export const isCoinbaseConnector = (connectorId?: string) => connectorId === WALLET_IDS.COINBASE_WALLET;

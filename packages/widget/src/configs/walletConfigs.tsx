@@ -24,6 +24,16 @@ export const walletConfigs: Record<WalletId, WalletConfig> = {
       connectingDescription: 'Confirm connection via pop-up windows',
     },
   },
+  [WALLET_IDS.PWDLESS]: {
+    name: 'Continue with Email',
+    icon: <RoninWaypointCustomSquareLogo />,
+    displayOptions: {
+      thumbnail: <RoninWaypointCustomLogo />,
+      highlightBackground: true,
+      showRoninBadge: true,
+      connectingDescription: 'Confirm connection via pop-up windows',
+    },
+  },
   [WALLET_IDS.RONIN_WALLET]: {
     name: 'Ronin Wallet Extension',
     icon: <RoninExtensionCustomSquareLogo />,

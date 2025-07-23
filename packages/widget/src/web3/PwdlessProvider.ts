@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { jwtDecode } from 'jwt-decode';
 import type { Address, Chain, Client, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import {
   ChainDisconnectedError,
@@ -12,9 +13,13 @@ import {
 } from 'viem';
 import { ronin, saigon } from 'viem/chains';
 
+import { Deferred } from '../utils/defer';
 import { getUserProfileAPI, sendTransactionAPI, signMessageAPI } from './apis';
 import { toTransactionInServerFormat } from './prepareTX';
 import { TransactionParams } from './types';
+
+const ACCESS_TOKEN_KEY = 'tanto::pwdless::accessToken';
+const ADDRESS_KEY = 'tanto::pwdless::address';
 
 const DEFAULT_CHAIN_ID = 2020;
 const DEFAULT_BASE_URL = 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc';
@@ -27,7 +32,6 @@ const CHAIN_MAPPING: Record<number, Chain> = {
 interface PwdlessProviderOptions {
   baseUrl?: string;
   chainId?: number;
-  accessToken: string;
 }
 
 export type PwdlessRequestSchema = [
@@ -69,18 +73,23 @@ export class PwdlessProviderError extends Error {
   }
 }
 
+export enum PwdlessProviderEvent {
+  CONNECT = 'tanto::pwdless::connect',
+  DISCONNECT = 'tanto::pwdless::disconnect',
+}
+
 export class PwdlessProvider extends EventEmitter {
   private _baseUrl: string;
   private _chainId: number;
-  private _accessToken: string;
+  private _accessToken!: string;
   private _publicClient: Client;
   private _isInitialized = false;
   private _address: Address | null = null;
+  static pendingTasks = new Map<PwdlessProviderEvent, Deferred<any>>();
 
-  constructor({ baseUrl = DEFAULT_BASE_URL, chainId = DEFAULT_CHAIN_ID, accessToken }: PwdlessProviderOptions) {
+  constructor({ baseUrl = DEFAULT_BASE_URL, chainId = DEFAULT_CHAIN_ID }: PwdlessProviderOptions) {
     super();
     this._baseUrl = baseUrl;
-    this._accessToken = accessToken;
     this._chainId = chainId;
     this._publicClient = this.createPublicClient(chainId);
   }
@@ -259,12 +268,60 @@ export class PwdlessProvider extends EventEmitter {
   /*              Utilities functions             */
   /* -------------------------------------------- */
 
+  connect = async (): Promise<{ address: Address; accessToken: string }> => {
+    if (this.isConnected()) {
+      this._accessToken = localStorage.getItem(ACCESS_TOKEN_KEY) || '';
+      this._address = localStorage.getItem(ADDRESS_KEY) as Address;
+      this._isInitialized = true;
+      return { address: this._address, accessToken: this._accessToken };
+    }
+
+    const existingTask = PwdlessProvider.pendingTasks.get(PwdlessProviderEvent.CONNECT);
+    if (existingTask) return existingTask.promise;
+
+    const deferred = new Deferred<{ address: Address; accessToken: string }>();
+    PwdlessProvider.pendingTasks.set(PwdlessProviderEvent.CONNECT, deferred);
+
+    const { address, accessToken } = await deferred.promise;
+    this._accessToken = accessToken;
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    localStorage.setItem(ADDRESS_KEY, address);
+    this._address = address;
+    this._isInitialized = true;
+
+    return { address, accessToken };
+  };
+
+  static resolveConnect = (address: Address, accessToken: string) => {
+    const deferred = PwdlessProvider.pendingTasks.get(PwdlessProviderEvent.CONNECT);
+    if (!deferred) return;
+    deferred.resolve({ address, accessToken });
+  };
+
   getChainId = (): number => {
     return this._chainId;
   };
 
+  disconnect = () => {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(ADDRESS_KEY);
+    this._accessToken = '';
+    this._address = null;
+    this._isInitialized = false;
+  };
+
   isConnected = (): boolean => {
-    return this._isInitialized && !!this._address;
+    const address = localStorage.getItem(ADDRESS_KEY);
+    if (!address) return false;
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!accessToken) return false;
+    try {
+      const { exp } = jwtDecode(accessToken);
+      const isValid = typeof exp === 'number' && exp > Date.now() / 1000 - 10;
+      return isValid;
+    } catch (error) {
+      return false;
+    }
   };
 
   getAddress = (): Address | null => {

@@ -11,6 +11,7 @@ import { coinbaseWallet, safe, walletConnect } from 'wagmi/connectors';
 import { RONIN_WALLET_WEB_LINK } from './constants';
 import { getVersionInfo } from './utils/common';
 import { TantoWidgetError, TantoWidgetErrorCodes } from './utils/errors';
+import { pwdlessConnector } from './web3/pwdlessConnector';
 
 export const RONIN_WALLET_METADATA = {
   projectId: 'd2ef97836db7eb390bcb2c1e9847ecdc',
@@ -82,6 +83,12 @@ const createRoninConnector = (): CreateConnectorFn => roninWallet();
 
 const createSafeConnector = (): CreateConnectorFn => safe();
 
+const createPwdlessConnector = (): CreateConnectorFn =>
+  pwdlessConnector({
+    baseUrl: 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc',
+    chainId: 2021,
+  });
+
 function createWaypointConnector(config: DefaultConfig['keylessWalletConfig']): CreateConnectorFn {
   return waypoint({
     source: getVersionInfo(),
@@ -120,7 +127,7 @@ function createCoinbaseConnector(
 
 export function createConnectors(config: DefaultConfig): CreateConnectorFn[] {
   const appMetadata = createAppMetadata(config.appMetadata);
-  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector()];
+  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector(), createPwdlessConnector()];
   const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig } = config;
   if (keylessWalletConfig?.enable !== false)
     connectors.push(createWaypointConnector(omit(keylessWalletConfig, 'enable')));

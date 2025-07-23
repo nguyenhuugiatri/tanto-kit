@@ -11,6 +11,7 @@ import { isDesktop, isMobile } from '../utils/userAgent';
 import {
   isCoinbaseConnector,
   isInjectedConnector,
+  isPwdlessConnector,
   isRoninExtensionInstalled,
   isRoninInAppBrowser,
   isSafeConnector,
@@ -36,6 +37,7 @@ function getWalletInstallationStatus(
     isSafeConnector(id) ||
     isCoinbaseConnector(id) ||
     isWaypointConnector(id) ||
+    isPwdlessConnector(id) ||
     isWCConnector(id) ||
     isInjectedConnector(type)
   );
@@ -80,6 +82,7 @@ export function useWallets() {
     const walletMap = new Map(wallets.map(wallet => [wallet.id, wallet]));
     const safeWallet = isSafe ? walletMap.get(WALLET_IDS.SAFE) : null;
     const waypointWallet = walletMap.get(WALLET_IDS.WAYPOINT);
+    const pwdlessWallet = walletMap.get(WALLET_IDS.PWDLESS);
     const coinbaseWallet = walletMap.get(WALLET_IDS.COINBASE_WALLET);
     const wcWallet = walletMap.get(WALLET_IDS.WALLET_CONNECT);
     const roninExtensionWallet =
@@ -106,6 +109,7 @@ export function useWallets() {
 
     return {
       waypointWallet,
+      pwdlessWallet,
       roninExtensionWallet,
       roninMobileWallet,
       roninInAppBrowserWallet,
@@ -117,10 +121,10 @@ export function useWallets() {
   }, [wallets, isSafe]);
 
   const primaryWallets = useMemo(() => {
-    const { waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } = walletsByType;
-    if (deviceInfo.isDesktop) return [waypointWallet, roninExtensionWallet].filter(notEmpty);
+    const { pwdlessWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } = walletsByType;
+    if (deviceInfo.isDesktop) return [pwdlessWallet, roninExtensionWallet].filter(notEmpty);
     if (deviceInfo.isMobile && !deviceInfo.isRoninInAppBrowser)
-      return [waypointWallet, roninMobileWallet].filter(notEmpty);
+      return [pwdlessWallet, roninMobileWallet].filter(notEmpty);
     if (deviceInfo.isRoninInAppBrowser) return [roninInAppBrowserWallet].filter(notEmpty);
     return [];
   }, [walletsByType, deviceInfo]);
@@ -141,6 +145,7 @@ export function useWallets() {
       primaryWallets,
       secondaryWallets,
       waypointWallet: walletsByType.waypointWallet,
+      pwdlessWallet: walletsByType.pwdlessWallet,
     }),
     [primaryWallets, secondaryWallets, walletsByType],
   );

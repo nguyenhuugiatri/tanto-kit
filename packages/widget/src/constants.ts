@@ -4,6 +4,7 @@ import { ronin, saigon } from 'viem/chains';
 // Wallet
 export const WALLET_IDS = {
   WAYPOINT: 'WAYPOINT',
+  PWDLESS: 'pwdless',
   RONIN_WALLET: 'RONIN_WALLET',
   RONIN_WALLET_INJECTED: 'com.roninchain.wallet',
   WALLET_CONNECT: 'walletConnect',
