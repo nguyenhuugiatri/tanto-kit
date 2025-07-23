@@ -1,3 +1,8 @@
+import camelcaseKeys from 'camelcase-keys';
+import decamelizeKeys from 'decamelize-keys';
+
+import { hasValue } from '../utils/common';
+
 export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 export interface RequestOptions {
@@ -7,14 +12,40 @@ export interface RequestOptions {
   timeout?: number;
 }
 
-export class RequestError extends Error {
-  readonly status: number;
-  readonly data: unknown;
-  constructor(message: string, status: number, data: unknown = null) {
+interface CommonErrorData {
+  code: number;
+  message: string;
+  status?: string;
+  details?: string;
+}
+
+interface MPCErrorData {
+  error_code: number;
+  error_details: {
+    reason: string;
+    server_error_code: number;
+  };
+  error_message: string;
+}
+
+export class RequestError<T extends CommonErrorData | MPCErrorData> extends Error {
+  readonly code: number;
+
+  constructor(data: T) {
+    let message: string;
+    let code: number;
+
+    if ('error_message' in data) {
+      message = data.error_message;
+      code = data.error_code;
+    } else {
+      message = data.message;
+      code = data.code;
+    }
+
     super(message);
     this.name = 'RequestError';
-    this.status = status;
-    this.data = data;
+    this.code = code;
   }
 }
 
@@ -24,7 +55,7 @@ export async function request<T = unknown>(url: string, options: RequestOptions 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  const hasBody = body !== undefined && ['POST', 'PUT', 'PATCH'].includes(method);
+  const hasBody = hasValue(body) && ['POST', 'PUT', 'PATCH'].includes(method);
 
   const fetchOptions: RequestInit = {
     method,
@@ -33,27 +64,27 @@ export async function request<T = unknown>(url: string, options: RequestOptions 
       ...(hasBody && { 'Content-Type': 'application/json' }),
       ...headers,
     },
-    body: hasBody ? JSON.stringify(body) : undefined,
+    body: hasBody ? JSON.stringify(decamelizeKeys(body, { deep: true })) : undefined,
     signal: controller.signal,
   };
 
   try {
     const response = await fetch(url, fetchOptions);
-    const responseData = await response.json();
+    const rawData = await response.json();
+    const normalizedData = camelcaseKeys(rawData, { deep: true });
 
-    if (!response.ok)
-      throw new RequestError(response.statusText || `HTTP ${response.status}`, response.status, responseData);
+    if (!response.ok) throw new RequestError(normalizedData);
 
-    return responseData as T;
+    return normalizedData;
   } catch (error) {
     if (error instanceof RequestError) throw error;
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError') throw new RequestError('Request timeout', 408);
-      throw new RequestError(error.message, 0);
+      if (error.name === 'AbortError') throw new RequestError({ code: 408, message: 'Request timeout' });
+      throw new RequestError({ code: 0, message: error.message });
     }
 
-    throw new RequestError('Unknown error occurred', 0);
+    throw new RequestError({ code: 0, message: 'Unknown error occurred' });
   } finally {
     clearTimeout(timeoutId);
   }

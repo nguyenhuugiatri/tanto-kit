@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
-import { useEffect } from 'react';
 
-import { useCountdown } from '../../../hooks/useCountdown';
+import { Countdown } from '../../../components/countdown/Countdown';
+import { RESEND_EMAIL_PENDING_TIME } from '../../../constants';
 
 export interface ResendEmailProps {
   pendingTime?: number;
@@ -29,32 +29,31 @@ const Timer = styled.span({
 export function ResendEmail({
   onResend,
   className,
-  pendingTime = 30,
+  pendingTime = RESEND_EMAIL_PENDING_TIME,
   label = "Didn't get an email?",
   resendText = 'Resend code',
 }: ResendEmailProps) {
-  const [count, { startCountdown, resetCountdown }] = useCountdown({ countStart: pendingTime });
-
-  useEffect(() => {
-    startCountdown();
-  }, [startCountdown]);
-
-  const resendHandler = async () => {
-    onResend?.();
-    resetCountdown();
-    startCountdown();
-  };
-
   return (
     <Container className={className}>
       {label}{' '}
-      {count === 0 ? (
-        <ResendButton onClick={resendHandler}>{resendText}</ResendButton>
-      ) : (
-        <>
-          Send a new code in <Timer>{`0${Math.floor(count)}`.slice(-2)}s</Timer>
-        </>
-      )}
+      <Countdown pendingTime={pendingTime}>
+        {({ count, start }) =>
+          count === 0 ? (
+            <ResendButton
+              onClick={() => {
+                onResend?.();
+                start();
+              }}
+            >
+              {resendText}
+            </ResendButton>
+          ) : (
+            <>
+              Send a new code in <Timer>{count.toString().padStart(2, '0')}s</Timer>
+            </>
+          )
+        }
+      </Countdown>
     </Container>
   );
 }

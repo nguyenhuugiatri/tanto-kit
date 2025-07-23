@@ -1,67 +1,139 @@
-import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box, BoxProps } from '../../components/box/Box';
+import { useTantoConfig } from '../../contexts/tanto/useTantoConfig';
+import { useWidgetConnect } from '../../contexts/widget-connect/useWidgetConnect';
 import { useWidgetRouter } from '../../contexts/widget-router/useWidgetRouter';
+import { mutation } from '../../services/queries';
+import { Route } from '../../types/route';
+import { getSecondsFromMessage } from '../../utils/string';
 import { KeylessHeader } from './components/KeylessHeader';
 import { StepCreatingKeyless } from './components/StepCreatingKeyless';
-import { StepMigratePassword } from './components/StepMigratePassword';
 import { StepOTP } from './components/StepOTP';
 import { StepSelectProvider } from './components/StepSelectProvider';
 import { StepSuccess } from './components/StepSuccess';
 
+const PWDLESS_BASE_URL = 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc';
+const KEYGEN_SOCKET_URL = 'wss://project-x.skymavis.one';
+
 enum Step {
   SELECT_METHOD = 1,
   OTP = 2,
-  MIGRATE_PASSWORDLESS = 3,
-  CREATE_NEW_KEYLESS_WALLET = 4,
-  SUCCESS = 5,
+  CREATE_NEW_KEYLESS_WALLET = 3,
+  SUCCESS = 4,
 }
 
 interface EmailFormData {
   email: string;
 }
 
-interface PasswordLessFormData {
-  password: string;
+export function getOTPError(error: { code?: number; message: string }) {
+  switch (error.code) {
+    case 400046:
+      return 'Invalid code. Please try again.';
+    default:
+      return error.message || 'Failed to verify OTP.';
+  }
 }
 
 export function Keyless(props: BoxProps) {
   const [step, setStep] = useState(Step.SELECT_METHOD);
-  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
-  const { goBack: goBackRouter } = useWidgetRouter();
+  const { goBack: goBackRouter, goTo: goToRouter } = useWidgetRouter();
+  const { clientId = '', __internal_baseUrl } = useTantoConfig();
+  const [waitSeconds, setWaitSeconds] = useState(0);
+  const { waypointWallet, setSelectedWallet } = useWidgetConnect();
 
-  const next = (nextStep: Step) => setStep(nextStep);
+  const {
+    mutateAsync: authenticateWithOTP,
+    isPending: isAuthenticateWithOTPPending,
+    error: authenticateWithOTPError,
+    reset: resetAuthenticateWithOTP,
+    isSuccess: isAuthenticateWithOTPSuccess,
+  } = useMutation(mutation.authenticateWithOTP());
+  const {
+    mutateAsync: initOTPPasswordless,
+    isPending: isInitOTPPasswordlessPending,
+    reset: resetInitOTPPasswordless,
+  } = useMutation({
+    ...mutation.initOTPPasswordless(),
+    onSuccess: () => {
+      setWaitSeconds(0);
+      resetAuthenticateWithOTP();
+    },
+    onError: error => setWaitSeconds(getSecondsFromMessage(error.message)),
+  });
+  const { mutateAsync: createKeylessWallet } = useMutation(mutation.createKeylessWallet());
+
+  const { mutateAsync: getUserProfile, isPending: isGetUserProfilePending } = useMutation(mutation.getUserProfile());
+
+  const otpError = authenticateWithOTPError ? getOTPError(authenticateWithOTPError) : undefined;
+
   const back = () => {
     if (step === Step.SELECT_METHOD) return goBackRouter();
-    if (step === Step.MIGRATE_PASSWORDLESS) return setStep(Step.SELECT_METHOD);
     return setStep(step - 1);
   };
 
-  const handleEmailSubmit = ({ email }: EmailFormData) => {
-    setEmail(email);
-    setStep(Step.OTP);
+  const handleEmailSubmit = async ({ email }: EmailFormData) => {
+    try {
+      await initOTPPasswordless({ baseUrl: __internal_baseUrl, clientId, email });
+      setStep(Step.OTP);
+    } catch {}
+  };
+
+  const handleOTPChange = () => {
+    resetAuthenticateWithOTP();
   };
 
   const handleSubmitOTP = async (_code: string) => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-
-    const randomStep =
-      Math.random() > 0.5
-        ? Step.MIGRATE_PASSWORDLESS
-        : Math.random() > 0.5
-        ? Step.CREATE_NEW_KEYLESS_WALLET
-        : Step.SUCCESS;
-    setStep(randomStep);
+    const { accessToken } = await authenticateWithOTP({ baseUrl: __internal_baseUrl, clientId, email, otp: _code });
+    localStorage.setItem('accessToken', accessToken);
+    try {
+      const { preferMethod } = await getUserProfile({
+        baseUrl: PWDLESS_BASE_URL,
+        accessToken,
+      });
+      if (preferMethod !== 'passwordless') {
+        if (!waypointWallet) return;
+        setSelectedWallet(waypointWallet);
+        goToRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
+      }
+      setStep(Step.SUCCESS);
+    } catch {
+      setStep(Step.CREATE_NEW_KEYLESS_WALLET);
+    }
   };
 
-  const handlePasswordlessSubmit = (_password: PasswordLessFormData) => next(Step.SUCCESS);
-  const handleResend = async () => {};
+  const handleCreateKeylessWallet = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) return;
+    try {
+      await createKeylessWallet({
+        accessToken,
+        baseUrl: PWDLESS_BASE_URL,
+        socketUrl: KEYGEN_SOCKET_URL,
+      });
+      await getUserProfile({
+        baseUrl: PWDLESS_BASE_URL,
+        accessToken,
+      });
+      setStep(Step.SUCCESS);
+    } catch {}
+  };
 
-  const showBackButton = step !== Step.SUCCESS;
+  const handleResend = async () => {
+    initOTPPasswordless({ baseUrl: __internal_baseUrl, clientId, email });
+  };
+
+  useEffect(() => {
+    resetInitOTPPasswordless();
+    resetAuthenticateWithOTP();
+    setWaitSeconds(0);
+  }, [email]);
+
+  const showBackButton = ![Step.SUCCESS, Step.CREATE_NEW_KEYLESS_WALLET].includes(step);
   const showLogo = step === Step.SELECT_METHOD;
   const title = step === Step.SELECT_METHOD ? 'Sign in with Email & OTP' : null;
 
@@ -73,16 +145,32 @@ export function Keyless(props: BoxProps) {
         title={title}
         showLogo={showLogo}
         step={step}
-        totalSteps={3}
+        totalSteps={2}
       />
 
       <TransitionedView viewKey={step}>
-        {step === Step.SELECT_METHOD && <StepSelectProvider onSubmit={handleEmailSubmit} />}
-        {step === Step.OTP && (
-          <StepOTP email={email} onOTPSubmit={handleSubmitOTP} onResend={handleResend} isLoading={isLoading} />
+        {step === Step.SELECT_METHOD && (
+          <StepSelectProvider
+            onSubmit={handleEmailSubmit}
+            waitSeconds={waitSeconds}
+            isLoading={isInitOTPPasswordlessPending}
+            onEmailChange={setEmail}
+          />
         )}
-        {step === Step.MIGRATE_PASSWORDLESS && <StepMigratePassword onSubmit={handlePasswordlessSubmit} />}
-        {step === Step.CREATE_NEW_KEYLESS_WALLET && <StepCreatingKeyless />}
+        {step === Step.OTP && (
+          <StepOTP
+            email={email}
+            onOTPChange={handleOTPChange}
+            onOTPSubmit={handleSubmitOTP}
+            onResend={handleResend}
+            isLoading={isAuthenticateWithOTPPending || isGetUserProfilePending}
+            error={otpError}
+            isSuccess={isAuthenticateWithOTPSuccess}
+          />
+        )}
+        {step === Step.CREATE_NEW_KEYLESS_WALLET && (
+          <StepCreatingKeyless handleCreateKeylessWallet={handleCreateKeylessWallet} />
+        )}
         {step === Step.SUCCESS && <StepSuccess />}
       </TransitionedView>
     </Box>

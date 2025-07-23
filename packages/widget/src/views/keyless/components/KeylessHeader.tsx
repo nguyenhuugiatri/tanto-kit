@@ -36,7 +36,7 @@ export function KeylessHeader({
   onBack,
 }: KeylessHeaderProps) {
   return (
-    <Box fullWidth justify="space-between" pr={44}>
+    <Box fullWidth justify="space-between" pr={44} pl={showBackButton ? 0 : 44}>
       {showBackButton && (
         <IconButton aria-label="Back" intent="secondary" variant="plain" icon={<ArrowLeftIcon />} onClick={onBack} />
       )}

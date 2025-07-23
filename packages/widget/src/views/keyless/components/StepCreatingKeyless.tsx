@@ -1,8 +1,13 @@
 import styled from '@emotion/styled';
+import { useEffect } from 'react';
 
 import { Hourglass } from '../../../assets/Hourglass';
 import { Box } from '../../../components/box/Box';
 import { DotLoading } from '../../../components/dot-loading/DotLoading';
+
+interface StepCreatingKeylessProps {
+  handleCreateKeylessWallet: () => void;
+}
 
 const StyledHourglass = styled(Hourglass)({
   marginBottom: 32,
@@ -23,9 +28,13 @@ const Description = styled.p(({ theme }) => ({
   textAlign: 'center',
 }));
 
-export function StepCreatingKeyless() {
+export function StepCreatingKeyless({ handleCreateKeylessWallet }: StepCreatingKeylessProps) {
+  useEffect(() => {
+    handleCreateKeylessWallet();
+  }, []);
+
   return (
-    <Box fullWidth vertical align="center" pb={12}>
+    <Box fullWidth vertical align="center">
       <StyledHourglass />
       <Box gap={4} mb={8} align="flex-end">
         <Title>Creating wallet</Title>

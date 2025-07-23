@@ -26,12 +26,6 @@ const WalletIcon = styled.img({
   objectFit: 'contain',
 });
 
-interface UseWalletsResult {
-  wallets: Wallet[];
-  primaryWallets: Wallet[];
-  secondaryWallets: Wallet[];
-}
-
 function getWalletInstallationStatus(
   connector: Connector<CreateConnectorFn>,
   connectors: readonly Connector<CreateConnectorFn>[],
@@ -65,7 +59,7 @@ function createWalletWithConfig(baseWallet: Wallet): Wallet {
   return walletConfig ? { ...baseWallet, ...walletConfig } : baseWallet;
 }
 
-export function useWallets(): UseWalletsResult {
+export function useWallets() {
   const connectors = useConnectors();
   const { isSafe } = useIsSafeWallet();
   const deviceInfo = useMemo(
@@ -146,7 +140,8 @@ export function useWallets(): UseWalletsResult {
       wallets: [...primaryWallets, ...secondaryWallets],
       primaryWallets,
       secondaryWallets,
+      waypointWallet: walletsByType.waypointWallet,
     }),
-    [primaryWallets, secondaryWallets],
+    [primaryWallets, secondaryWallets, walletsByType],
   );
 }

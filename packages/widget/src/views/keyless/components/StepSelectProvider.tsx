@@ -5,17 +5,22 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '../../../components/button/Button';
+import { Countdown } from '../../../components/countdown/Countdown';
 import { Input } from '../../../components/input/Input';
 import { TRANSITION_DURATION } from '../../../constants';
 
 const emailSchema = z.object({
-  email: z.email('Invalid email address').min(1, 'Email is required'),
+  email: z.email('Invalid email address.').min(1, 'Email is required.'),
 });
 
 type EmailFormData = z.infer<typeof emailSchema>;
 
 export interface StepSelectProviderProps {
+  isLoading?: boolean;
   defaultEmail?: string;
+  waitSeconds?: number;
+  error?: string;
+  onEmailChange: (email: string) => void;
   onSubmit: (data: EmailFormData) => void;
 }
 
@@ -27,7 +32,7 @@ const Form = styled.form({
 });
 
 export function StepSelectProvider(props: StepSelectProviderProps) {
-  const { onSubmit, defaultEmail = '' } = props;
+  const { onSubmit, defaultEmail = '', waitSeconds = 0, isLoading = false, error, onEmailChange } = props;
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,17 +65,31 @@ export function StepSelectProvider(props: StepSelectProviderProps) {
         control={control}
         render={({ field }) => (
           <Input
-            ref={inputRef}
             placeholder="your@gmail.com"
-            error={errors.email?.message}
+            ref={inputRef}
+            readOnly={isLoading}
+            error={error || errors.email?.message}
             value={field.value}
-            onChange={field.onChange}
+            onChange={email => {
+              field.onChange(email);
+              onEmailChange(email);
+            }}
           />
         )}
       />
-      <Button disabled={!email || !isValid} fullWidth type="submit">
-        Continue
-      </Button>
+      <Countdown pendingTime={waitSeconds}>
+        {({ count }) => {
+          return count === 0 ? (
+            <Button fullWidth disabled={!email || !isValid} loading={isLoading} type="submit">
+              Continue
+            </Button>
+          ) : (
+            <Button fullWidth disabled>
+              Try again in {count.toString().padStart(2, '0')}s
+            </Button>
+          );
+        }}
+      </Countdown>
     </Form>
   );
 }
