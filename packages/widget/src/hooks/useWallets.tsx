@@ -121,10 +121,11 @@ export function useWallets() {
   }, [wallets, isSafe]);
 
   const primaryWallets = useMemo(() => {
-    const { pwdlessWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } = walletsByType;
-    if (deviceInfo.isDesktop) return [pwdlessWallet, roninExtensionWallet].filter(notEmpty);
+    const { pwdlessWallet, waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } =
+      walletsByType;
+    if (deviceInfo.isDesktop) return [pwdlessWallet ?? waypointWallet, roninExtensionWallet].filter(notEmpty);
     if (deviceInfo.isMobile && !deviceInfo.isRoninInAppBrowser)
-      return [pwdlessWallet, roninMobileWallet].filter(notEmpty);
+      return [pwdlessWallet ?? waypointWallet, roninMobileWallet].filter(notEmpty);
     if (deviceInfo.isRoninInAppBrowser) return [roninInAppBrowserWallet].filter(notEmpty);
     return [];
   }, [walletsByType, deviceInfo]);

@@ -31,6 +31,7 @@ const EXCLUDED_CONFIG_KEYS = [
   'appDescription',
   'appUrl',
   'walletConnectConfig',
+  'passwordlessWalletConfig',
   'keylessWalletConfig',
   'chains',
   'showCoinbaseWallet',
@@ -44,6 +45,8 @@ export interface KeylessWalletConfig {
   scopes?: WaypointScope[];
   popupCloseDelay?: number;
 }
+
+export interface PasswordlessWalletConfig {}
 
 export interface AppMetadata {
   appName?: string;
@@ -60,6 +63,7 @@ export type DefaultConfig = Prettify<
   Partial<Omit<CreateConfigParameters, 'client' | 'connectors'>> & {
     appMetadata?: AppMetadata;
     walletConnectConfig?: WalletEnableConfig & Partial<Omit<WalletConnectParameters, 'showQrModal'>>;
+    passwordlessWalletConfig?: WalletEnableConfig & PasswordlessWalletConfig;
     keylessWalletConfig?: WalletEnableConfig & KeylessWalletConfig;
     coinbaseWalletConfig?: WalletEnableConfig & Partial<CoinbaseWalletParameters>;
   }
@@ -127,14 +131,15 @@ function createCoinbaseConnector(
 
 export function createConnectors(config: DefaultConfig): CreateConnectorFn[] {
   const appMetadata = createAppMetadata(config.appMetadata);
-  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector(), createPwdlessConnector()];
-  const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig } = config;
+  const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector()];
+  const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig, passwordlessWalletConfig } = config;
   if (keylessWalletConfig?.enable !== false)
     connectors.push(createWaypointConnector(omit(keylessWalletConfig, 'enable')));
   if (walletConnectConfig?.enable !== false)
     connectors.push(createWalletConnectConnector(appMetadata, omit(walletConnectConfig, 'enable')));
   if (coinbaseWalletConfig?.enable)
     connectors.push(createCoinbaseConnector(appMetadata, omit(coinbaseWalletConfig, 'enable')));
+  if (passwordlessWalletConfig?.enable) connectors.push(createPwdlessConnector());
   return connectors;
 }
 
