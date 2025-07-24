@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box, BoxProps } from '../../components/box/Box';
-import { DELAY_CONNECT } from '../../constants';
 import { useTantoConfig } from '../../contexts/tanto/useTantoConfig';
 import { useWidgetConnect } from '../../contexts/widget-connect/useWidgetConnect';
 import { useWidgetRouter } from '../../contexts/widget-router/useWidgetRouter';
@@ -103,6 +102,7 @@ export function Keyless(props: BoxProps) {
         if (!waypointWallet) return;
         setSelectedWallet(waypointWallet);
         goToRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
+        return;
       }
       connectKeyless();
       setTimeout(() => {
@@ -127,7 +127,10 @@ export function Keyless(props: BoxProps) {
         baseUrl: PWDLESS_BASE_URL,
         accessToken,
       });
-      PwdlessProvider.resolveConnect(address, accessToken);
+      connectKeyless();
+      setTimeout(() => {
+        PwdlessProvider.resolveConnect(address, accessToken);
+      });
       setStep(Step.SUCCESS);
     } catch {}
   };

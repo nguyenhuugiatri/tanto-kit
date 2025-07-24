@@ -63,6 +63,10 @@ const config = defineConfig({
       'react-hook-form',
       '@hookform/resolvers',
       'input-otp',
+      'jwt-decode',
+      'camelcase-keys',
+      'decamelize-keys',
+      'eventemitter3',
     ].some(pkg => id === pkg || id.startsWith(`${pkg}/`) || id.startsWith(`@${pkg}/`)),
   plugins: [
     peerDepsExternal(),

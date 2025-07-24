@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import EventEmitter from 'eventemitter3';
 import { jwtDecode } from 'jwt-decode';
 import type { Address, Chain, Client, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import {

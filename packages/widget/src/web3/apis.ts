@@ -1,7 +1,6 @@
 import { Address, Hex } from 'viem';
 
 import { request } from '../services/request';
-import { HeadlessClientErrorCode } from '../utils/crypto';
 
 export interface ApiRequestParams {
   baseUrl: string;
@@ -12,7 +11,7 @@ export interface MPCProfileResponse {
   uuid: string;
   address: Address;
   hasSupportPwdless: boolean;
-  preferMethod: 'password' | 'passwordless';
+  preferMethod: 'recovery_password' | 'passwordless';
 }
 
 export const getUserProfileAPI = async ({ baseUrl, accessToken }: ApiRequestParams) => {
