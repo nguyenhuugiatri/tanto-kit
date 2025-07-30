@@ -1,5 +1,4 @@
 import styled from '@emotion/styled';
-import { useBalance } from 'wagmi';
 
 import { ArrowLeftIcon } from './assets/ArrowLeftIcon';
 import { SmoothHeight } from './components/animated-containers/SmoothHeight';
@@ -10,7 +9,6 @@ import { CSSReset } from './components/css-reset/CSSReset';
 import { WidgetConnectProvider } from './contexts/widget-connect/WidgetConnectProvider';
 import { useWidgetRouter } from './contexts/widget-router/useWidgetRouter';
 import { useIsModal } from './contexts/widget-ui-config/useIsModal';
-import { useAccount } from './hooks/useAccount';
 
 const ActionSection = styled.div({
   minWidth: 44,
@@ -51,10 +49,7 @@ function WidgetContentHeader() {
 }
 
 export function WidgetContent() {
-  const { address, chainId } = useAccount();
   const { view } = useWidgetRouter();
-
-  useBalance({ address, chainId });
 
   return (
     <CSSReset>

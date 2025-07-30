@@ -19,6 +19,7 @@ export function useTantoSetup(customConfig: TantoConfig) {
     disableProfile: false,
     hideConnectSuccessPrompt: false,
     createAccountOnConnect: false,
+    showConfirmationModal: false,
     initialChainId: chains?.[0]?.id,
     __internal_baseUrl: WAYPOINT_BASE_URL,
     ...customConfig,

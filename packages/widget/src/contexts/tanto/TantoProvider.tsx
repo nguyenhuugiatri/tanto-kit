@@ -12,6 +12,7 @@ import type { TantoConfig } from './TantoContext';
 import { TantoContext } from './TantoContext';
 import { useConnectionAnalytics } from './useConnectionAnalytics';
 import { useDeeplinkHandler } from './useDeeplinkHandler';
+import { usePwdlessEvent } from './usePwdlessEvent';
 import { useTantoSetup } from './useTantoSetup';
 
 export type TantoProviderProps = AccountConnectionCallback &
@@ -51,6 +52,7 @@ export function TantoProvider({
 
 function ConnectionHandler({ children, onConnect, onDisconnect }: ConnectionHandlerProps) {
   useDeeplinkHandler();
+  usePwdlessEvent();
   useConnectionAnalytics();
   useConnectCallback({
     onConnect,

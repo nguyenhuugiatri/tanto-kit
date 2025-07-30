@@ -1,5 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import { jwtDecode } from 'jwt-decode';
+import { v4 as uuidv4 } from 'uuid';
 import type { Address, Chain, Client, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import {
   ChainDisconnectedError,
@@ -13,23 +14,37 @@ import {
 } from 'viem';
 import { ronin, saigon } from 'viem/chains';
 
-import { Deferred } from '../utils/defer';
-import { getUserProfileAPI, sendTransactionAPI, signMessageAPI } from './apis';
+import { tantoStorage, TantoStorageKey } from '../utils/storage';
+import { sendTransactionAPI, signMessageAPI } from './apis';
 import { toTransactionInServerFormat } from './prepareTX';
+import { PwdlessEventType, pwdlessTaskManager } from './PwdlessTaskManager';
 import { TransactionParams } from './types';
-
-const ACCESS_TOKEN_KEY = 'tanto::pwdless::accessToken';
-const ADDRESS_KEY = 'tanto::pwdless::address';
 
 const DEFAULT_CHAIN_ID = 2020;
 const DEFAULT_BASE_URL = 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc';
+const TOKEN_EXPIRY_BUFFER_SECONDS = 30;
 
-const CHAIN_MAPPING: Record<number, Chain> = {
+const SUPPORTED_CHAINS: Record<number, Chain> = {
   [ronin.id]: ronin,
   [saigon.id]: saigon,
 };
 
-interface PwdlessProviderOptions {
+const ERROR_MESSAGES = {
+  NO_ACCESS_TOKEN: 'No access token found',
+  ACCESS_TOKEN_EXPIRED: 'Access token expired',
+  INVALID_ACCESS_TOKEN: 'Invalid access token',
+  USER_NOT_AUTHENTICATED: 'User not authenticated',
+  NO_ACCOUNT_FOUND: 'No account found',
+  CHAIN_NOT_SUPPORTED: (chainId: number) => `Chain ${chainId} is not supported`,
+  ADDRESS_MISMATCH: (current: Address, requested: Address) =>
+    `Address mismatch: current=${current}, requested=${requested}`,
+  UNABLE_TO_PARSE_TYPED_DATA: (data: string) => `Unable to parse typedData: ${data}`,
+  UNABLE_TO_PERSONAL_SIGN: 'Unable to perform personal sign',
+  UNABLE_TO_SIGN_TYPED_DATA: 'Unable to sign typed data',
+  UNABLE_TO_SEND_TRANSACTION: 'Unable to send transaction',
+} as const;
+
+interface PwdlessProviderConfig {
   baseUrl?: string;
   chainId?: number;
 }
@@ -73,74 +88,207 @@ export class PwdlessProviderError extends Error {
   }
 }
 
-export enum PwdlessProviderEvent {
-  CONNECT = 'tanto::pwdless::connect',
-  DISCONNECT = 'tanto::pwdless::disconnect',
-}
-
 export class PwdlessProvider extends EventEmitter {
-  private _baseUrl: string;
-  private _chainId: number;
-  private _accessToken!: string;
-  private _publicClient: Client;
-  private _isInitialized = false;
-  private _address: Address | null = null;
-  static pendingTasks = new Map<PwdlessProviderEvent, Deferred<any>>();
+  private readonly _baseUrl: string;
+  private readonly _chainId: number;
+  private readonly _publicClient: Client;
 
-  constructor({ baseUrl = DEFAULT_BASE_URL, chainId = DEFAULT_CHAIN_ID }: PwdlessProviderOptions) {
+  private _isAuthenticated: boolean = false;
+  private _accessToken: string | null = null;
+  private _accessTokenExpiry: number | null = null;
+  private _address: Address | null = null;
+
+  constructor({ baseUrl = DEFAULT_BASE_URL, chainId = DEFAULT_CHAIN_ID }: PwdlessProviderConfig = {}) {
     super();
     this._baseUrl = baseUrl;
     this._chainId = chainId;
     this._publicClient = this.createPublicClient(chainId);
   }
 
-  private createPublicClient(chainId: number) {
-    const chain = CHAIN_MAPPING[chainId];
-    if (!chain) throw new ChainDisconnectedError(new Error(`Chain ${chainId} is not supported.`));
+  private parseTypedData(data: TypedDataDefinition | string): TypedDataDefinition {
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data) as TypedDataDefinition;
+      } catch {
+        throw new InternalRpcError(new Error(ERROR_MESSAGES.UNABLE_TO_PARSE_TYPED_DATA(data)));
+      }
+    }
+    return data;
+  }
+
+  private validateAddressMatch(requestedAddress: Address, currentAddress: Address | null): void {
+    if (!currentAddress) {
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.NO_ACCOUNT_FOUND));
+    }
+    if (!isAddressEqual(requestedAddress, currentAddress)) {
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.ADDRESS_MISMATCH(currentAddress, requestedAddress)));
+    }
+  }
+
+  private getValidAccessToken(accessToken: string | null): string {
+    if (!accessToken) {
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.NO_ACCESS_TOKEN));
+    }
+
+    const now = Date.now() / 1000;
+
+    if (this._accessTokenExpiry && this._accessTokenExpiry > now + TOKEN_EXPIRY_BUFFER_SECONDS) {
+      return accessToken;
+    }
+
+    try {
+      const { exp } = jwtDecode(accessToken);
+
+      if (typeof exp !== 'number' || exp <= now + TOKEN_EXPIRY_BUFFER_SECONDS) {
+        throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.ACCESS_TOKEN_EXPIRED));
+      }
+
+      this._accessTokenExpiry = exp;
+      return accessToken;
+    } catch (error) {
+      if (error instanceof UnauthorizedProviderError) throw error;
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.INVALID_ACCESS_TOKEN));
+    }
+  }
+
+  private async ensureAuthenticated(): Promise<void> {
+    const isAuth = await this.isAuthenticated();
+    if (!isAuth) {
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.USER_NOT_AUTHENTICATED));
+    }
+  }
+
+  private createPublicClient(chainId: number): Client {
+    const chain = SUPPORTED_CHAINS[chainId];
+    if (!chain) {
+      throw new ChainDisconnectedError(new Error(ERROR_MESSAGES.CHAIN_NOT_SUPPORTED(chainId)));
+    }
+
     return createPublicClient({
       chain,
       transport: http(),
     });
   }
 
-  private async initialize() {
-    if (this._isInitialized) return;
+  private async executeWithTaskManager<T>(
+    eventType: PwdlessEventType,
+    params: unknown,
+    executor: () => Promise<T>,
+  ): Promise<T> {
+    const { promise } = pwdlessTaskManager.createTask({
+      eventType,
+      id: uuidv4(),
+      params,
+    });
+
+    await promise;
+    return executor();
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    const [storedAddress, storedToken] = await Promise.all([
+      tantoStorage.getItem(TantoStorageKey.Address),
+      tantoStorage.getItem(TantoStorageKey.AccessToken),
+    ]);
+
+    if (!storedAddress || !storedToken) {
+      this._isAuthenticated = false;
+      return false;
+    }
 
     try {
-      const { address, hasSupportPwdless } = await getUserProfileAPI({
-        baseUrl: this._baseUrl,
-        accessToken: this._accessToken,
-      });
+      // Uncomment this when the want to sync the address from the server
+      // const { address: serverAddress, preferMethod } = await getUserProfileAPI({
+      //   baseUrl: this._baseUrl,
+      //   accessToken: storedToken,
+      // });
 
-      if (!hasSupportPwdless) throw new PwdlessProviderError('User does not support passwordless', 4001);
+      // if (preferMethod !== 'passwordless') {
+      //   this._isAuthenticated = false;
+      //   return false;
+      // }
 
-      this._address = address;
-      this._isInitialized = true;
-    } catch (error) {
-      throw new PwdlessProviderError(`Pwdless Provider initialization failed: ${error}`, 4001);
+      // if (!isAddressEqual(storedAddress, serverAddress)) {
+      //   this._address = serverAddress;
+      //   await tantoStorage.setItem(TantoStorageKey.Address, serverAddress);
+      // } else {
+      //   this._address = storedAddress;
+      // }
+
+      this._accessToken = this.getValidAccessToken(storedToken);
+      this._address = storedAddress;
+      this._isAuthenticated = true;
+      return true;
+    } catch {
+      // Clear authentication state on any error
+      this._isAuthenticated = false;
+      this._accessToken = null;
+      this._address = null;
+      this._accessTokenExpiry = null;
+
+      // Clear storage asynchronously
+      this.disconnect();
+      return false;
     }
   }
 
-  getAccounts = (): Address[] => {
-    if (this._address && this._isInitialized) return [this._address];
-    return [];
-  };
+  getChainId(): number {
+    return this._chainId;
+  }
 
-  requestAccounts = async (): Promise<Address[]> => {
-    await this.initialize();
-    if (this._address && this._isInitialized) return [this._address];
-    throw new UnauthorizedProviderError(new Error('Pwdless Provider is not initialized or account not available'));
-  };
+  getAccounts(): Address[] {
+    return this._isAuthenticated && this._address ? [this._address] : [];
+  }
 
-  personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
-    const [data, address] = params;
-    const [currentAddress] = await this.requestAccounts();
+  async requestAccounts(): Promise<Address[]> {
+    await this.ensureAuthenticated();
 
-    if (!isAddressEqual(address, currentAddress)) {
-      throw new UnauthorizedProviderError(
-        new Error(`Address mismatch: current=${currentAddress}, requested=${address}`),
-      );
+    if (!this._address) {
+      throw new UnauthorizedProviderError(new Error(ERROR_MESSAGES.NO_ACCOUNT_FOUND));
     }
+
+    return [this._address];
+  }
+
+  async connect(): Promise<{ address: Address; accessToken: string }> {
+    if (this._isAuthenticated && this._address && this._accessToken) {
+      return {
+        address: this._address,
+        accessToken: this._accessToken,
+      };
+    }
+
+    const { promise } = pwdlessTaskManager.createTask({
+      eventType: PwdlessEventType.Connect,
+    });
+
+    const { address, accessToken } = await promise;
+
+    this._address = address;
+    this._accessToken = this.getValidAccessToken(accessToken);
+
+    await Promise.all([
+      tantoStorage.setItem(TantoStorageKey.AccessToken, accessToken),
+      tantoStorage.setItem(TantoStorageKey.Address, address),
+    ]);
+
+    return { address, accessToken };
+  }
+
+  disconnect(): void {
+    this._isAuthenticated = false;
+    this._accessToken = null;
+    this._address = null;
+    this._accessTokenExpiry = null;
+
+    tantoStorage.removeItem(TantoStorageKey.AccessToken);
+    tantoStorage.removeItem(TantoStorageKey.Address);
+  }
+
+  private personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
+    const [data, address] = params;
+
+    this.validateAddressMatch(address, this._address);
 
     try {
       const messageToSign = hexToString(data);
@@ -148,37 +296,23 @@ export class PwdlessProvider extends EventEmitter {
 
       const { signature } = await signMessageAPI({
         baseUrl: this._baseUrl,
-        accessToken: this._accessToken,
+        accessToken: this.getValidAccessToken(this._accessToken),
         messageBase64,
       });
 
       return signature;
-    } catch (err) {
-      if (err instanceof Error) throw new InternalRpcError(err);
-      throw new InternalRpcError(new Error('Unable to perform personal sign'));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error : new Error(ERROR_MESSAGES.UNABLE_TO_PERSONAL_SIGN);
+      throw new InternalRpcError(errorMessage);
     }
   };
 
-  signTypedDataV4 = async (params: [address: Address, data: TypedDataDefinition | string]): Promise<Hex> => {
+  private signTypedDataV4 = async (params: [address: Address, data: TypedDataDefinition | string]): Promise<Hex> => {
     const [address, data] = params;
 
-    let typedData: TypedDataDefinition;
-    try {
-      if (typeof data === 'string') {
-        typedData = JSON.parse(data) as TypedDataDefinition;
-      } else {
-        typedData = data;
-      }
-    } catch (err) {
-      throw new InternalRpcError(new Error(`Unable to parse typedData: ${data}`));
-    }
+    this.validateAddressMatch(address, this._address);
 
-    const [currentAddress] = await this.requestAccounts();
-    if (!isAddressEqual(address, currentAddress)) {
-      throw new UnauthorizedProviderError(
-        new Error(`Address mismatch: current=${currentAddress}, requested=${address}`),
-      );
-    }
+    const typedData = this.parseTypedData(data);
 
     try {
       const messageToSign = JSON.stringify(typedData);
@@ -186,45 +320,42 @@ export class PwdlessProvider extends EventEmitter {
 
       const { signature } = await signMessageAPI({
         baseUrl: this._baseUrl,
-        accessToken: this._accessToken,
+        accessToken: this.getValidAccessToken(this._accessToken),
         messageBase64,
       });
 
       return signature;
-    } catch (err) {
-      if (err instanceof Error) throw new InternalRpcError(err);
-      throw new InternalRpcError(new Error('Unable to sign typed data'));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error : new Error(ERROR_MESSAGES.UNABLE_TO_SIGN_TYPED_DATA);
+      throw new InternalRpcError(errorMessage);
     }
   };
 
-  sendTransaction = async (params: [transaction: TransactionParams]): Promise<Hash> => {
-    const [tx] = params;
-    const [currentAddress] = await this.requestAccounts();
+  private sendTransaction = async (params: [transaction: TransactionParams]): Promise<Hash> => {
+    const [transaction] = params;
 
-    if (tx.from && !isAddressEqual(tx.from, currentAddress)) {
-      throw new UnauthorizedProviderError(
-        new Error(`Transaction from address mismatch: current=${currentAddress}, requested=${tx.from}`),
-      );
+    if (transaction.from) {
+      this.validateAddressMatch(transaction.from, this._address);
     }
 
     try {
-      const txData = await toTransactionInServerFormat({
+      const transactionData = await toTransactionInServerFormat({
         chain: { chainId: this._chainId, rpcUrl: this._publicClient.transport.url },
-        transaction: tx,
-        currentAddress,
+        transaction,
+        currentAddress: this._address!,
       });
 
       const { txHash } = await sendTransactionAPI({
         baseUrl: this._baseUrl,
-        accessToken: this._accessToken,
-        tx: txData,
+        accessToken: this.getValidAccessToken(this._accessToken),
+        tx: transactionData,
         rpcUrl: this._publicClient.transport.url,
       });
 
       return txHash;
-    } catch (err) {
-      if (err instanceof Error) throw new InternalRpcError(err);
-      throw new InternalRpcError(new Error('Unable to send transaction'));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error : new Error(ERROR_MESSAGES.UNABLE_TO_SEND_TRANSACTION);
+      throw new InternalRpcError(errorMessage);
     }
   };
 
@@ -232,103 +363,43 @@ export class PwdlessProvider extends EventEmitter {
     const { method, params } = args;
 
     switch (method) {
-      case 'eth_accounts': {
-        const result = this.getAccounts();
-        return result as ReturnType;
-      }
+      case 'eth_accounts':
+        return this.getAccounts() as ReturnType;
 
-      case 'eth_requestAccounts': {
-        const result = await this.requestAccounts();
-        return result as ReturnType;
-      }
+      case 'eth_requestAccounts':
+        return (await this.requestAccounts()) as ReturnType;
 
-      case 'eth_chainId': {
+      case 'eth_chainId':
         return toHex(this._chainId) as ReturnType;
-      }
 
-      case 'personal_sign': {
-        return this.personalSign(params) as ReturnType;
-      }
+      case 'personal_sign':
+        return this.executeWithTaskManager(PwdlessEventType.SignMessage, params, () =>
+          this.personalSign(params),
+        ) as ReturnType;
 
-      case 'eth_signTypedData_v4': {
-        return this.signTypedDataV4(params) as ReturnType;
-      }
+      case 'eth_signTypedData_v4':
+        return this.executeWithTaskManager(PwdlessEventType.SignMessage, params, () =>
+          this.signTypedDataV4(params),
+        ) as ReturnType;
 
-      case 'eth_sendTransaction': {
-        return this.sendTransaction(params) as ReturnType;
-      }
+      case 'eth_sendTransaction':
+        return this.executeWithTaskManager(PwdlessEventType.SignTransaction, params, () =>
+          this.sendTransaction(params),
+        ) as ReturnType;
 
-      default: {
+      default:
         return this._publicClient.request(args) as ReturnType;
-      }
     }
   };
 
-  /* -------------------------------------------- */
-  /*              Utilities functions             */
-  /* -------------------------------------------- */
-
-  connect = async (): Promise<{ address: Address; accessToken: string }> => {
-    if (this.isConnected()) {
-      this._accessToken = localStorage.getItem(ACCESS_TOKEN_KEY) || '';
-      this._address = localStorage.getItem(ADDRESS_KEY) as Address;
-      this._isInitialized = true;
-      return { address: this._address, accessToken: this._accessToken };
-    }
-
-    const existingTask = PwdlessProvider.pendingTasks.get(PwdlessProviderEvent.CONNECT);
-    if (existingTask) return existingTask.promise;
-
-    const deferred = new Deferred<{ address: Address; accessToken: string }>();
-    PwdlessProvider.pendingTasks.set(PwdlessProviderEvent.CONNECT, deferred);
-
-    const { address, accessToken } = await deferred.promise;
-    this._accessToken = accessToken;
-    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(ADDRESS_KEY, address);
-    this._address = address;
-    this._isInitialized = true;
-
-    return { address, accessToken };
-  };
-
-  static resolveConnect = (address: Address, accessToken: string) => {
-    const deferred = PwdlessProvider.pendingTasks.get(PwdlessProviderEvent.CONNECT);
-    if (!deferred) return;
-    deferred.resolve({ address, accessToken });
-  };
-
-  getChainId = (): number => {
-    return this._chainId;
-  };
-
-  disconnect = () => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(ADDRESS_KEY);
-    this._accessToken = '';
-    this._address = null;
-    this._isInitialized = false;
-  };
-
-  isConnected = (): boolean => {
-    const address = localStorage.getItem(ADDRESS_KEY);
-    if (!address) return false;
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-    if (!accessToken) return false;
-    try {
-      const { exp } = jwtDecode(accessToken);
-      const isValid = typeof exp === 'number' && exp > Date.now() / 1000 - 10;
-      return isValid;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  getAddress = (): Address | null => {
-    return (this._address as Address) || null;
-  };
-
-  updateAccessToken = (newToken: string) => {
-    this._accessToken = newToken;
-  };
+  // Static utility method for resolving connections
+  static resolveConnect(address: Address, accessToken: string): void {
+    // Next tick to avoid blocking
+    setTimeout(() => {
+      pwdlessTaskManager.resolveTask({
+        taskId: PwdlessEventType.Connect,
+        data: { address, accessToken },
+      });
+    });
+  }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@sky-mavis/tanto-widget",
   "type": "module",
-  "version": "0.0.4-beta.6",
+  "version": "0.0.4-beta.7",
   "description": "Tanto Widget",
   "author": "SkyMavis",
   "license": "MIT",
@@ -82,6 +82,7 @@
     "eventemitter3": "5.0.1",
     "input-otp": "1.4.2",
     "jwt-decode": "4.0.0",
+    "localforage": "1.10.0",
     "lodash.omit": "4.5.0",
     "motion": "12.19.1",
     "qr-code-styling": "1.9.2",

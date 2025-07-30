@@ -13,31 +13,26 @@ export function pwdlessConnector(options: PwdlessConnectorOptions) {
     chainId: options.chainId,
   });
 
-  const _connect = async () => {
-    const { address } = await provider.connect();
-    return {
-      accounts: [address] as const,
-      chainId: provider.getChainId(),
-    };
-  };
-
-  const _getAccounts = async () => {
-    const address = provider.getAddress();
-    return address ? ([address] as const) : [];
-  };
-
-  return createConnector(() => {
+  return createConnector<PwdlessProvider>(() => {
     return {
       icon: '',
       id: 'pwdless',
       name: 'Pwdless',
       type: 'pwdless',
-      connect: _connect,
-      getAccounts: _getAccounts,
-      getChainId: async () => provider.getChainId(),
       getProvider: async () => provider,
-      isAuthorized: async () => provider.isConnected(),
+      getAccounts: async () => provider.getAccounts(),
+      getChainId: async () => provider.getChainId(),
+      connect: async () => {
+        const { address } = await provider.connect();
+        return {
+          accounts: [address],
+          chainId: provider.getChainId(),
+        };
+      },
+      isAuthorized: async () => provider.isAuthenticated(),
       disconnect: async () => provider.disconnect(),
+
+      // TODO
       onAccountsChanged: () => {},
       onChainChanged: () => {},
       onDisconnect: () => {},

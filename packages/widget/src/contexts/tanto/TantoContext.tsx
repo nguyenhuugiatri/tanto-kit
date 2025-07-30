@@ -7,6 +7,7 @@ export interface TantoConfig {
   hideConnectSuccessPrompt?: boolean;
   initialChainId?: number;
   createAccountOnConnect?: boolean;
+  showConfirmationModal?: boolean;
   __internal_baseUrl?: string;
 }
 
