@@ -46,7 +46,7 @@ export class PwdlessTaskManager {
     const deferred = new Deferred<PwdlessResponseMap[E]>();
     this.tasks.set(taskId, deferred);
 
-    this.eventEmitter.emit(eventType, { taskId, promise: deferred.promise, params });
+    this.eventEmitter.emit(eventType, { eventType, taskId, promise: deferred.promise, params });
 
     return { taskId, promise: deferred.promise };
   }
@@ -99,16 +99,20 @@ export class PwdlessTaskManager {
     return deferred;
   }
 
+  removeTask({ taskId }: { taskId: string }) {
+    this.tasks.delete(taskId);
+  }
+
   on<E extends PwdlessEventType, P = any>(
     eventType: E,
-    listener: (params: { taskId: string; promise: Deferred<PwdlessResponseMap[E]>; params: P }) => void,
+    listener: (params: { eventType: E; taskId: string; promise: Deferred<PwdlessResponseMap[E]>; params: P }) => void,
   ) {
     this.eventEmitter.on(eventType, listener);
   }
 
   off<E extends PwdlessEventType, P = any>(
     eventType: E,
-    listener: (params: { taskId: string; promise: Deferred<PwdlessResponseMap[E]>; params: P }) => void,
+    listener: (params: { eventType: E; taskId: string; promise: Deferred<PwdlessResponseMap[E]>; params: P }) => void,
   ) {
     this.eventEmitter.off(eventType, listener);
   }

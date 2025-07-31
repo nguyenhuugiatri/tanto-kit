@@ -9,9 +9,7 @@ export function usePwdlessEvent() {
   useEffect(() => {
     const handler = ({ taskId }: { taskId: string }) => {
       if (!showConfirmationModal) {
-        pwdlessTaskManager.resolveTask({
-          taskId,
-        });
+        pwdlessTaskManager.resolveTask({ taskId });
         return;
       }
     };

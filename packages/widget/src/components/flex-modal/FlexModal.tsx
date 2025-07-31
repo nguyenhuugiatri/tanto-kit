@@ -130,10 +130,11 @@ export interface FlexModalProps {
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onAfterClose?: () => void;
 }
 
 export function FlexModal(props: FlexModalProps) {
-  const { children, defaultOpen, open, onOpenChange } = props;
+  const { children, defaultOpen, open, onOpenChange, onAfterClose } = props;
   const isMobile = useIsMobileView();
 
   const contextValue = useMemo(
@@ -148,7 +149,7 @@ export function FlexModal(props: FlexModalProps) {
       <Root modal defaultOpen={defaultOpen} open={open} onOpenChange={onOpenChange}>
         <Portal>
           <Overlay />
-          <Content forceMount>
+          <Content forceMount onCloseAutoFocus={onAfterClose}>
             <VisuallyHidden>
               <Title />
             </VisuallyHidden>
