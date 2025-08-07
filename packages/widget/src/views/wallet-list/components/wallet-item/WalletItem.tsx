@@ -38,8 +38,13 @@ export function WalletItem({ wallet }: WalletItemProps) {
       chain_id: connector?.chainId,
     });
 
-    const route = walletState.isWCWallet ? Route.CONNECT_WC : Route.CONNECT_INJECTOR;
-    goTo(route, { title: name });
+    const route = walletState.isPwdlessWallet
+      ? Route.KEYLESS
+      : walletState.isWCWallet
+      ? Route.CONNECT_WC
+      : Route.CONNECT_INJECTOR;
+    const title = walletState.isPwdlessWallet ? undefined : name;
+    goTo(route, { title });
   }, [
     isInstalled,
     homepage,

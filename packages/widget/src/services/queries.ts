@@ -1,65 +1,30 @@
-import { Address } from 'viem';
-
-import { WAYPOINT_BASE_URL } from '../constants';
-import { request } from './request';
+import { httpService } from './HttpService';
 
 export const query = {} as const;
 
 export const mutation = {
   generateNonce: () => ({
     mutationKey: ['tantoGenerateNonce'],
-    mutationFn: async ({
-      baseUrl = WAYPOINT_BASE_URL,
-      clientId = '',
-      address,
-    }: {
-      baseUrl?: string;
-      clientId?: string;
-      address: Address;
-    }) => {
-      return request<{
-        expirationTime: string;
-        issuedAt: string;
-        nonce: string;
-        notBefore: string;
-      }>(`${baseUrl}/siwe/init`, {
-        method: 'POST',
-        headers: {
-          'sm-client-id': clientId,
-        },
-        body: {
-          address,
-        },
-      });
-    },
+    mutationFn: httpService.generateNonceAPI,
   }),
   createAccount: () => ({
     mutationKey: ['tantoCreateAccount'],
-    mutationFn: async ({
-      baseUrl = WAYPOINT_BASE_URL,
-      clientId = '',
-      message,
-      signature,
-    }: {
-      baseUrl?: string;
-      clientId?: string;
-      message: string;
-      signature: string;
-    }) => {
-      return request<{
-        address: string;
-        idToken: string;
-        userID: string;
-      }>(`${baseUrl}/siwe/authenticate`, {
-        method: 'POST',
-        headers: {
-          'sm-client-id': clientId,
-        },
-        body: {
-          message,
-          signature,
-        },
-      });
-    },
+    mutationFn: httpService.authenticateWithSiweAPI,
+  }),
+  initOTPPasswordless: () => ({
+    mutationKey: ['tantoInitOTPPasswordless'],
+    mutationFn: httpService.initOTPPasswordlessAPI,
+  }),
+  authenticateWithOTP: () => ({
+    mutationKey: ['tantoAuthenticateWithOTP'],
+    mutationFn: httpService.authenticateWithOtpAPI,
+  }),
+  getUserProfile: () => ({
+    mutationKey: ['tantoGetUserProfileAPI'],
+    mutationFn: httpService.getUserProfileAPI,
+  }),
+  createKeylessWallet: () => ({
+    mutationKey: ['tantoCreateKeylessWallet'],
+    mutationFn: httpService.createKeylessWalletAPI,
   }),
 } as const;

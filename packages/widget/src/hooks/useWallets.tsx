@@ -11,6 +11,7 @@ import { isDesktop, isMobile } from '../utils/userAgent';
 import {
   isCoinbaseConnector,
   isInjectedConnector,
+  isPwdlessConnector,
   isRoninExtensionInstalled,
   isRoninInAppBrowser,
   isSafeConnector,
@@ -26,12 +27,6 @@ const WalletIcon = styled.img({
   objectFit: 'contain',
 });
 
-interface UseWalletsResult {
-  wallets: Wallet[];
-  primaryWallets: Wallet[];
-  secondaryWallets: Wallet[];
-}
-
 function getWalletInstallationStatus(
   connector: Connector<CreateConnectorFn>,
   connectors: readonly Connector<CreateConnectorFn>[],
@@ -42,6 +37,7 @@ function getWalletInstallationStatus(
     isSafeConnector(id) ||
     isCoinbaseConnector(id) ||
     isWaypointConnector(id) ||
+    isPwdlessConnector(id) ||
     isWCConnector(id) ||
     isInjectedConnector(type)
   );
@@ -65,7 +61,7 @@ function createWalletWithConfig(baseWallet: Wallet): Wallet {
   return walletConfig ? { ...baseWallet, ...walletConfig } : baseWallet;
 }
 
-export function useWallets(): UseWalletsResult {
+export function useWallets() {
   const connectors = useConnectors();
   const { isSafe } = useIsSafeWallet();
   const deviceInfo = useMemo(
@@ -86,6 +82,7 @@ export function useWallets(): UseWalletsResult {
     const walletMap = new Map(wallets.map(wallet => [wallet.id, wallet]));
     const safeWallet = isSafe ? walletMap.get(WALLET_IDS.SAFE) : null;
     const waypointWallet = walletMap.get(WALLET_IDS.WAYPOINT);
+    const pwdlessWallet = walletMap.get(WALLET_IDS.PWDLESS);
     const coinbaseWallet = walletMap.get(WALLET_IDS.COINBASE_WALLET);
     const wcWallet = walletMap.get(WALLET_IDS.WALLET_CONNECT);
     const roninExtensionWallet =
@@ -112,6 +109,7 @@ export function useWallets(): UseWalletsResult {
 
     return {
       waypointWallet,
+      pwdlessWallet,
       roninExtensionWallet,
       roninMobileWallet,
       roninInAppBrowserWallet,
@@ -123,10 +121,11 @@ export function useWallets(): UseWalletsResult {
   }, [wallets, isSafe]);
 
   const primaryWallets = useMemo(() => {
-    const { waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } = walletsByType;
-    if (deviceInfo.isDesktop) return [waypointWallet, roninExtensionWallet].filter(notEmpty);
+    const { pwdlessWallet, waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } =
+      walletsByType;
+    if (deviceInfo.isDesktop) return [pwdlessWallet ?? waypointWallet, roninExtensionWallet].filter(notEmpty);
     if (deviceInfo.isMobile && !deviceInfo.isRoninInAppBrowser)
-      return [waypointWallet, roninMobileWallet].filter(notEmpty);
+      return [pwdlessWallet ?? waypointWallet, roninMobileWallet].filter(notEmpty);
     if (deviceInfo.isRoninInAppBrowser) return [roninInAppBrowserWallet].filter(notEmpty);
     return [];
   }, [walletsByType, deviceInfo]);
@@ -146,7 +145,9 @@ export function useWallets(): UseWalletsResult {
       wallets: [...primaryWallets, ...secondaryWallets],
       primaryWallets,
       secondaryWallets,
+      waypointWallet: walletsByType.waypointWallet,
+      pwdlessWallet: walletsByType.pwdlessWallet,
     }),
-    [primaryWallets, secondaryWallets],
+    [primaryWallets, secondaryWallets, walletsByType],
   );
 }

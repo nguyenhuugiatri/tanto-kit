@@ -24,7 +24,23 @@ export const WalletAccount = () => {
       <WillRender when={isConnected}>
         <User name={connector?.name} description={address} />
         <p>ChainId: {chainId}</p>
-        <Button onClick={() => signMessage({ message: 'Hello Ronin Wallet!' })}>Sign Message</Button>
+        <Button
+          onClick={async () => {
+            signMessage(
+              { message: 'Hello Ronin Wallet!' },
+              {
+                onSuccess: data => {
+                  alert(JSON.stringify(data, null, 2));
+                },
+                onError: error => {
+                  alert(JSON.stringify(error, null, 2));
+                },
+              },
+            );
+          }}
+        >
+          Sign Message
+        </Button>
         <Button onClick={() => disconnect()}>Disconnect</Button>
       </WillRender>
     </div>

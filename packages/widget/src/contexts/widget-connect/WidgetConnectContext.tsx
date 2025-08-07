@@ -9,6 +9,7 @@ export interface WidgetConnectState {
   secondaryWallets: Wallet[];
   selectedWallet?: Wallet;
   selectedConnector?: Connector;
+  waypointWallet?: Wallet;
   setSelectedWallet: (wallet: Wallet) => void;
 }
 

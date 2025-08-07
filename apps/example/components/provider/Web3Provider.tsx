@@ -11,6 +11,9 @@ const config = getDefaultConfig({
   coinbaseWalletConfig: {
     enable: true,
   },
+  passwordlessWalletConfig: {
+    enable: true,
+  },
 });
 
 const queryClient = new QueryClient();
