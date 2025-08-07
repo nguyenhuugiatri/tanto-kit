@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { useChains } from 'wagmi';
 
 import { analytic } from '../../analytic';
-import { WAYPOINT_BASE_URL } from '../../constants';
+import { MPC_BASE_URL, MPC_SOCKET_URL, WAYPOINT_BASE_URL } from '../../constants';
 import { usePreloadTantoImages } from '../../hooks/usePreloadImages';
 import { useSolveRoninConnectionConflict } from '../../hooks/useSolveRoninConnectionConflict';
+import { httpService } from '../../services/HttpService';
 import { TantoWidgetError, TantoWidgetErrorCodes } from '../../utils/errors';
 import type { TantoConfig } from './TantoContext';
 
@@ -21,7 +22,9 @@ export function useTantoSetup(customConfig: TantoConfig) {
     createAccountOnConnect: false,
     showConfirmationModal: false,
     initialChainId: chains?.[0]?.id,
-    __internal_baseUrl: WAYPOINT_BASE_URL,
+    __internal_waypointBaseUrl: WAYPOINT_BASE_URL,
+    __internal_mpcBaseUrl: MPC_BASE_URL,
+    __internal_mpcSocketUrl: MPC_SOCKET_URL,
     ...customConfig,
   };
 
@@ -31,6 +34,11 @@ export function useTantoSetup(customConfig: TantoConfig) {
       'clientId is required when createAccountOnConnect is enabled',
     );
   }
+
+  if (config?.__internal_waypointBaseUrl) httpService.setWaypointBaseUrl(config.__internal_waypointBaseUrl);
+  if (config?.__internal_mpcBaseUrl) httpService.setKeylessBaseUrl(config.__internal_mpcBaseUrl);
+  if (config?.__internal_mpcSocketUrl) httpService.setKeygenSocketUrl(config.__internal_mpcSocketUrl);
+  if (config?.clientId) httpService.setClientId(config.clientId);
 
   useEffect(() => {
     analytic.updateSession({});

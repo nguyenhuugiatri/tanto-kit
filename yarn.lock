@@ -406,6 +406,20 @@
     "@babel/helper-string-parser" "^7.25.9"
     "@babel/helper-validator-identifier" "^7.25.9"
 
+"@base-org/account@1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@base-org/account/-/account-1.1.1.tgz#779f1fa7d10501201c4b6d5e21bfe17580cfddbc"
+  integrity sha512-IfVJPrDPhHfqXRDb89472hXkpvJuQQR7FDI9isLPHEqSYt/45whIoBxSPgZ0ssTt379VhQo4+87PWI1DoLSfAQ==
+  dependencies:
+    "@noble/hashes" "1.4.0"
+    clsx "1.2.1"
+    eventemitter3 "5.0.1"
+    idb-keyval "6.2.1"
+    ox "0.6.9"
+    preact "10.24.2"
+    viem "^2.31.7"
+    zustand "5.0.3"
+
 "@bcoe/v8-coverage@^0.2.3":
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
@@ -4883,11 +4897,12 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@wagmi/connectors@5.8.6":
-  version "5.8.6"
-  resolved "https://registry.yarnpkg.com/@wagmi/connectors/-/connectors-5.8.6.tgz#5c5b1c15fbf0b83ed2d1aae0426b4f6990e1b153"
-  integrity sha512-yasw1bR4LuLeqYPJLezZHTT1s/Xv3LBStO4gmbkRK/jvspaJxd4btzHlo+e1XgOvBo5vFHFeFgz9x8Vl2i74IA==
+"@wagmi/connectors@5.9.1":
+  version "5.9.1"
+  resolved "https://registry.yarnpkg.com/@wagmi/connectors/-/connectors-5.9.1.tgz#b85872cdb50d190c921d0f12e727ded4f69258fb"
+  integrity sha512-o50e6reSYkVi2d72WWwbKSZ7xgLAeQ1Ja64tTWq3UhU1XtJPvQXWieCInIGInOajAAsZsYCPKYrPj6WoSl0Hqw==
   dependencies:
+    "@base-org/account" "1.1.1"
     "@coinbase/wallet-sdk" "4.3.6"
     "@metamask/sdk" "0.32.0"
     "@safe-global/safe-apps-provider" "0.18.6"
@@ -4895,10 +4910,10 @@
     "@walletconnect/ethereum-provider" "2.21.1"
     cbw-sdk "npm:@coinbase/wallet-sdk@3.9.3"
 
-"@wagmi/core@2.17.3":
-  version "2.17.3"
-  resolved "https://registry.yarnpkg.com/@wagmi/core/-/core-2.17.3.tgz#57da549a064a2e7682e9725f140efddf4adaf564"
-  integrity sha512-fgZR9fAiCFtGaosTspkTx5lidccq9Z5xRWOk1HG0VfB6euQGw2//Db7upiP4uQ7DPst2YS9yQN2A1m9+iJLYCw==
+"@wagmi/core@2.18.1":
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/@wagmi/core/-/core-2.18.1.tgz#ddcd90b7f9d26c55f4eb05a5cb4a1d9e4d49db6b"
+  integrity sha512-mU+qXeeY2/0lq8bf4uFm5RtMrc8FgOToqzMVMf6MzNdNbKxpNlmlbuTyRbyd9cxn4UnYa6+S6Bmx1x42FV7w3g==
   dependencies:
     eventemitter3 "5.0.1"
     mipd "0.0.7"
@@ -9841,7 +9856,7 @@ object.values@^1.1.5, object.values@^1.1.6, object.values@^1.2.0:
     define-properties "^1.2.1"
     es-object-atoms "^1.0.0"
 
-ofetch@^1.3.4:
+ofetch@1.4.1, ofetch@^1.3.4:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/ofetch/-/ofetch-1.4.1.tgz#b6bf6b0d75ba616cef6519dd8b6385a8bae480ec"
   integrity sha512-QZj2DfGplQAr2oj9KzceK9Hwz6Whxazmn85yYeVuS3u9XTMOGMRx0kO95MQ+vLsj/S/NwBDMMLU5hpxvI6Tklw==
@@ -9906,10 +9921,10 @@ ox@0.6.9:
     abitype "^1.0.6"
     eventemitter3 "5.0.1"
 
-ox@0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/ox/-/ox-0.8.1.tgz#c1328e4c890583b9c19d338126aef4b796d53543"
-  integrity sha512-e+z5epnzV+Zuz91YYujecW8cF01mzmrUtWotJ0oEPym/G82uccs7q0WDHTYL3eiONbTUEvcZrptAKLgTBD3u2A==
+ox@0.8.6:
+  version "0.8.6"
+  resolved "https://registry.yarnpkg.com/ox/-/ox-0.8.6.tgz#7dd666216ee8cda2eb2e5fef3fe4cb20dec3dcad"
+  integrity sha512-eiKcgiVVEGDtEpEdFi1EGoVVI48j6icXHce9nFwCNM7CKG3uoCXKdr4TPhS00Iy1TR2aWSF1ltPD0x/YgqIL9w==
   dependencies:
     "@adraffy/ens-normalize" "^1.11.0"
     "@noble/ciphers" "^1.3.0"
@@ -12047,10 +12062,10 @@ vaul@1.1.2:
   dependencies:
     "@radix-ui/react-dialog" "^1.1.1"
 
-viem@2.23.2, viem@2.x, viem@>=2.29.0, viem@^2.1.1, viem@^2.23.2, viem@^2.27.2:
-  version "2.32.0"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-2.32.0.tgz#6994fce43c5feed21367c80dd488a755838101da"
-  integrity sha512-pHwKXQSyEWX+8ttOQJdU5dSBfYd6L9JxARY/Sx0MBj3uF/Zaiqt6o1SbzjFjQXkNzWSgtxK7H89ZI1SMIA2iLQ==
+viem@2.23.2, viem@2.x, viem@>=2.29.0, viem@^2.1.1, viem@^2.23.2, viem@^2.27.2, viem@^2.31.7:
+  version "2.33.2"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.33.2.tgz#039732775976efb821a2f7c6c6d4cd6029f5af4f"
+  integrity sha512-/720OaM4dHWs8vXwNpyet+PRERhPaW+n/1UVSCzyb9jkmwwVfaiy/R6YfCFb4v+XXbo8s3Fapa3DM5yCRSkulA==
   dependencies:
     "@noble/curves" "1.9.2"
     "@noble/hashes" "1.8.0"
@@ -12058,16 +12073,16 @@ viem@2.23.2, viem@2.x, viem@>=2.29.0, viem@^2.1.1, viem@^2.23.2, viem@^2.27.2:
     "@scure/bip39" "1.6.0"
     abitype "1.0.8"
     isows "1.0.7"
-    ox "0.8.1"
+    ox "0.8.6"
     ws "8.18.2"
 
 wagmi@2.14.16, wagmi@^2.14.11:
-  version "2.15.7"
-  resolved "https://registry.yarnpkg.com/wagmi/-/wagmi-2.15.7.tgz#b156ca2f69fc4e6fcf5facb94195331e7898748c"
-  integrity sha512-nm7i6i5ct+9A4MMADf/XX9kLrc9s8aap/ZpSXYpwh1Tc/348RZ+kI9dn7+MDQE+ez8zkn75vMAfWg9UUpO4K1g==
+  version "2.16.1"
+  resolved "https://registry.yarnpkg.com/wagmi/-/wagmi-2.16.1.tgz#65f8c96c6d3f6ae85e5776e130bf54f1ba0fae70"
+  integrity sha512-iUdaoe/xd5NiNRW72QVctZs+962EORJKAvJTCsmf9n6TnEApPlENuvVRJKgobI4cGUgi5scWAstpLprB+RRo9Q==
   dependencies:
-    "@wagmi/connectors" "5.8.6"
-    "@wagmi/core" "2.17.3"
+    "@wagmi/connectors" "5.9.1"
+    "@wagmi/core" "2.18.1"
     use-sync-external-store "1.4.0"
 
 walker@^1.0.8:

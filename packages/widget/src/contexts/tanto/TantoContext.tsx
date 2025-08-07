@@ -8,7 +8,9 @@ export interface TantoConfig {
   initialChainId?: number;
   createAccountOnConnect?: boolean;
   showConfirmationModal?: boolean;
-  __internal_baseUrl?: string;
+  __internal_waypointBaseUrl?: string;
+  __internal_mpcBaseUrl?: string;
+  __internal_mpcSocketUrl?: string;
 }
 
 export interface TantoState {

@@ -2,7 +2,7 @@ import { Client, Hex, numberToHex } from 'viem';
 import { getGasPrice } from 'viem/actions';
 import { ronin, saigon } from 'viem/chains';
 
-import { getEIP1559GasSuggestionAPI } from './apis';
+import { httpService } from '../services/HttpService';
 import { SupportedTransactionType } from './types';
 import { isEIP1559CompatibleTransaction } from './utils';
 
@@ -40,7 +40,7 @@ const handleEIP1559Transaction = async (params: EstimateFeesPerGasParams): Promi
     };
   }
 
-  const gasSuggestion = await getEIP1559GasSuggestionAPI({ baseUrl: GAS_SUGGESTION_BASE_URL[chainId] });
+  const gasSuggestion = await httpService.getEIP1559GasSuggestionAPI({ baseUrl: GAS_SUGGESTION_BASE_URL[chainId] });
   const { maxPriorityFeePerGas, maxFeePerGas } = gasSuggestion.medium;
 
   return {

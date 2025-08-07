@@ -14,11 +14,11 @@ import {
 } from 'viem';
 import { ronin, saigon } from 'viem/chains';
 
-import { tantoStorage, TantoStorageKey } from '../utils/storage';
-import { sendTransactionAPI, signMessageAPI } from './apis';
+import { authStorage } from '../services/AuthStorage';
+import { httpService } from '../services/HttpService';
 import { toTransactionInServerFormat } from './prepareTX';
-import { PwdlessEventType, pwdlessTaskManager } from './PwdlessTaskManager';
 import { TransactionParams } from './types';
+import { WalletOperationType, walletTaskManager } from './WalletTaskManager';
 
 const DEFAULT_CHAIN_ID = 2020;
 const DEFAULT_BASE_URL = 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc';
@@ -97,6 +97,7 @@ export class PwdlessProvider extends EventEmitter {
   private _accessToken: string | null = null;
   private _accessTokenExpiry: number | null = null;
   private _address: Address | null = null;
+  private _storage = authStorage;
 
   constructor({ baseUrl = DEFAULT_BASE_URL, chainId = DEFAULT_CHAIN_ID }: PwdlessProviderConfig = {}) {
     super();
@@ -170,37 +171,37 @@ export class PwdlessProvider extends EventEmitter {
     });
   }
 
-  private async executeWithTaskManager<T>(
-    eventType: PwdlessEventType,
+  private async waitForUserConfirm<T>(
+    operationType: WalletOperationType,
     params: unknown,
     executor: () => Promise<T>,
   ): Promise<T> {
-    const { promise } = pwdlessTaskManager.createTask({
-      eventType,
+    const { promise: confirmPromise } = walletTaskManager.createTask({
+      operationType,
       id: uuidv4(),
       params,
     });
 
-    await promise;
+    await confirmPromise;
     return executor();
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const [storedAddress, storedToken] = await Promise.all([
-      tantoStorage.getItem(TantoStorageKey.Address),
-      tantoStorage.getItem(TantoStorageKey.AccessToken),
+    const [storedAddress, storedToken, storedRefreshToken] = await Promise.all([
+      this._storage.getAddress(),
+      this._storage.getAccessToken(),
+      this._storage.getRefreshToken(),
     ]);
 
-    if (!storedAddress || !storedToken) {
+    if (!storedAddress || !storedToken || !storedRefreshToken) {
       this._isAuthenticated = false;
       return false;
     }
 
     try {
-      // Uncomment this when the want to sync the address from the server
+      // Uncomment this for syncing with the server address
       // const { address: serverAddress, preferMethod } = await getUserProfileAPI({
       //   baseUrl: this._baseUrl,
-      //   accessToken: storedToken,
       // });
 
       // if (preferMethod !== 'passwordless') {
@@ -210,7 +211,7 @@ export class PwdlessProvider extends EventEmitter {
 
       // if (!isAddressEqual(storedAddress, serverAddress)) {
       //   this._address = serverAddress;
-      //   await tantoStorage.setItem(TantoStorageKey.Address, serverAddress);
+      //   await this._storage.setAddress(serverAddress);
       // } else {
       //   this._address = storedAddress;
       // }
@@ -220,13 +221,11 @@ export class PwdlessProvider extends EventEmitter {
       this._isAuthenticated = true;
       return true;
     } catch {
-      // Clear authentication state on any error
       this._isAuthenticated = false;
       this._accessToken = null;
       this._address = null;
       this._accessTokenExpiry = null;
 
-      // Clear storage asynchronously
       this.disconnect();
       return false;
     }
@@ -258,8 +257,8 @@ export class PwdlessProvider extends EventEmitter {
       };
     }
 
-    const { promise } = pwdlessTaskManager.createTask({
-      eventType: PwdlessEventType.Connect,
+    const { promise } = walletTaskManager.createTask({
+      operationType: WalletOperationType.Connect,
     });
 
     const { address, accessToken } = await promise;
@@ -267,10 +266,7 @@ export class PwdlessProvider extends EventEmitter {
     this._address = address;
     this._accessToken = this.getValidAccessToken(accessToken);
 
-    await Promise.all([
-      tantoStorage.setItem(TantoStorageKey.AccessToken, accessToken),
-      tantoStorage.setItem(TantoStorageKey.Address, address),
-    ]);
+    await Promise.all([this._storage.setAccessToken(accessToken), this._storage.setAddress(address)]);
 
     return { address, accessToken };
   }
@@ -280,9 +276,7 @@ export class PwdlessProvider extends EventEmitter {
     this._accessToken = null;
     this._address = null;
     this._accessTokenExpiry = null;
-
-    tantoStorage.removeItem(TantoStorageKey.AccessToken);
-    tantoStorage.removeItem(TantoStorageKey.Address);
+    this._storage.resetAuth();
   }
 
   private personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
@@ -294,9 +288,7 @@ export class PwdlessProvider extends EventEmitter {
       const messageToSign = hexToString(data);
       const messageBase64 = btoa(messageToSign);
 
-      const { signature } = await signMessageAPI({
-        baseUrl: this._baseUrl,
-        accessToken: this.getValidAccessToken(this._accessToken),
+      const { signature } = await httpService.signMessageAPI({
         messageBase64,
       });
 
@@ -318,9 +310,7 @@ export class PwdlessProvider extends EventEmitter {
       const messageToSign = JSON.stringify(typedData);
       const messageBase64 = btoa(messageToSign);
 
-      const { signature } = await signMessageAPI({
-        baseUrl: this._baseUrl,
-        accessToken: this.getValidAccessToken(this._accessToken),
+      const { signature } = await httpService.signMessageAPI({
         messageBase64,
       });
 
@@ -345,9 +335,7 @@ export class PwdlessProvider extends EventEmitter {
         currentAddress: this._address!,
       });
 
-      const { txHash } = await sendTransactionAPI({
-        baseUrl: this._baseUrl,
-        accessToken: this.getValidAccessToken(this._accessToken),
+      const { txHash } = await httpService.sendTransactionAPI({
         tx: transactionData,
         rpcUrl: this._publicClient.transport.url,
       });
@@ -373,17 +361,17 @@ export class PwdlessProvider extends EventEmitter {
         return toHex(this._chainId) as ReturnType;
 
       case 'personal_sign':
-        return this.executeWithTaskManager(PwdlessEventType.SignMessage, params, () =>
+        return this.waitForUserConfirm(WalletOperationType.SignMessage, params, () =>
           this.personalSign(params),
         ) as ReturnType;
 
       case 'eth_signTypedData_v4':
-        return this.executeWithTaskManager(PwdlessEventType.SignMessage, params, () =>
+        return this.waitForUserConfirm(WalletOperationType.SignMessage, params, () =>
           this.signTypedDataV4(params),
         ) as ReturnType;
 
       case 'eth_sendTransaction':
-        return this.executeWithTaskManager(PwdlessEventType.SignTransaction, params, () =>
+        return this.waitForUserConfirm(WalletOperationType.SignTransaction, params, () =>
           this.sendTransaction(params),
         ) as ReturnType;
 
@@ -392,14 +380,10 @@ export class PwdlessProvider extends EventEmitter {
     }
   };
 
-  // Static utility method for resolving connections
-  static resolveConnect(address: Address, accessToken: string): void {
-    // Next tick to avoid blocking
+  static resolveConnect({ address, accessToken }: { address: Address; accessToken: string }): void {
+    // Next tick
     setTimeout(() => {
-      pwdlessTaskManager.resolveTask({
-        taskId: PwdlessEventType.Connect,
-        data: { address, accessToken },
-      });
+      walletTaskManager.resolveTask(WalletOperationType.Connect, { address, accessToken });
     });
   }
 }

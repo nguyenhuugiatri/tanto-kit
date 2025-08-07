@@ -7,23 +7,21 @@ import { Box } from './components/box/Box';
 import { Button, IconButton } from './components/button/Button';
 import { FlexModal } from './components/flex-modal/FlexModal';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
-import { PwdlessEventType, pwdlessTaskManager } from './web3/PwdlessTaskManager';
+import { WalletOperationType, walletTaskManager } from './web3/WalletTaskManager';
 
 interface Task {
-  type: PwdlessEventType;
+  type: WalletOperationType;
   id: string;
   params: any;
 }
 
-const TRACKED_EVENTS = [PwdlessEventType.SignMessage, PwdlessEventType.SignTransaction];
+const TRACKED_EVENTS = [WalletOperationType.SignMessage, WalletOperationType.SignTransaction];
 
 const Title = styled.div({
-  flex: 1,
-  display: 'flex',
   alignItems: 'center',
-  fontSize: '1.25em',
-  fontWeight: 500,
-  wordBreak: 'break-word',
+  fontSize: '1.5em',
+  fontWeight: 600,
+  marginTop: 8,
 });
 
 function CloseButton({ onClick }: { onClick: () => void }) {
@@ -46,67 +44,62 @@ export function ConfirmationModal() {
 
   const closeModal = () => setIsOpen(false);
 
-  const handleRemoveTask = () => {
-    if (task) pwdlessTaskManager.removeTask({ taskId: task.id });
+  const handleRemoveTaskOnClose = () => {
+    if (!task) return;
+    walletTaskManager.cancelTask(task.id);
+    closeModal();
   };
 
   const handleCancel = () => {
     if (!task) return;
-    pwdlessTaskManager.rejectTask({
-      taskId: task.id,
-      error: new UserRejectedRequestError(new Error('User rejected request')),
-    });
+    walletTaskManager.rejectTask(task.id, new UserRejectedRequestError(new Error('User rejected request')));
     closeModal();
   };
 
   const handleConfirm = () => {
     if (!task) return;
-    pwdlessTaskManager.resolveTask({ taskId: task.id });
+    walletTaskManager.resolveTask(task.id);
     closeModal();
   };
 
   useEffect(() => {
-    if (!showConfirmationModal) return;
+    if (!showConfirmationModal) {
+      const unsubscribe = walletTaskManager.onTaskCreated(({ taskId }) => {
+        walletTaskManager.resolveTask(taskId);
+      });
+      return () => {
+        unsubscribe();
+      };
+    }
 
-    const handler = ({
-      eventType,
-      taskId,
-      params,
-    }: {
-      eventType: PwdlessEventType;
-      taskId: string;
-      params: unknown;
-    }) => {
-      setTask({ id: taskId, type: eventType, params });
+    const unsubscribe = walletTaskManager.onTaskCreated(({ taskId, operationType, params }) => {
+      if (!TRACKED_EVENTS.includes(operationType)) return;
+      setTask({ id: taskId, type: operationType, params });
       setIsOpen(true);
-    };
-
-    TRACKED_EVENTS.forEach(eventType => {
-      pwdlessTaskManager.on(eventType, handler);
     });
 
     return () => {
-      TRACKED_EVENTS.forEach(eventType => {
-        pwdlessTaskManager.off(eventType, handler);
-      });
+      unsubscribe();
     };
   }, [showConfirmationModal]);
 
   if (!task) return null;
 
   return (
-    <FlexModal open={isOpen} onOpenChange={setIsOpen} onAfterClose={handleRemoveTask}>
+    <FlexModal open={isOpen} onOpenChange={setIsOpen} onAfterClose={handleRemoveTaskOnClose}>
       <Box vertical gap={16}>
         <Box vertical gap={8}>
-          <Title>Confirmation {task.type}</Title>
+          <Title>Message Signing Request</Title>
           <p>Are you sure you want to continue?</p>
           <pre style={{ whiteSpace: 'pre-wrap' }}>Params: {JSON.stringify(task.params, null, 2)}</pre>
         </Box>
-        <Box gap={8}>
-          <Button intent="secondary" onClick={handleCancel}>
+        <Box fullWidth gap={8}>
+          <Button fullWidth intent="secondary" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm}>Confirm</Button>
+          <Button fullWidth onClick={handleConfirm}>
+            Confirm
+          </Button>
         </Box>
       </Box>
       <CloseButton onClick={closeModal} />

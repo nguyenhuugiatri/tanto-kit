@@ -17,9 +17,6 @@ import { StepOTP } from './components/StepOTP';
 import { StepSelectProvider } from './components/StepSelectProvider';
 import { StepSuccess } from './components/StepSuccess';
 
-const PWDLESS_BASE_URL = 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc';
-const KEYGEN_SOCKET_URL = 'wss://project-x.skymavis.one';
-
 enum Step {
   SELECT_METHOD = 1,
   OTP = 2,
@@ -44,7 +41,7 @@ export function Keyless(props: BoxProps) {
   const [step, setStep] = useState(Step.SELECT_METHOD);
   const [email, setEmail] = useState('');
   const { goBack: goBackRouter, goTo: goToRouter } = useWidgetRouter();
-  const { clientId = '', __internal_baseUrl, hideConnectSuccessPrompt } = useTantoConfig();
+  const { hideConnectSuccessPrompt } = useTantoConfig();
   const [waitSeconds, setWaitSeconds] = useState(0);
   const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
   const { connect: triggerConnect } = useConnectAndAuth({ connector: selectedConnector });
@@ -81,7 +78,7 @@ export function Keyless(props: BoxProps) {
 
   const handleEmailSubmit = async ({ email }: EmailFormData) => {
     try {
-      await initOTPPasswordless({ baseUrl: __internal_baseUrl, clientId, email });
+      await initOTPPasswordless({ email });
       setStep(Step.OTP);
     } catch {}
   };
@@ -91,13 +88,10 @@ export function Keyless(props: BoxProps) {
   };
 
   const handleSubmitOTP = async (_code: string) => {
-    const { accessToken } = await authenticateWithOTP({ baseUrl: __internal_baseUrl, clientId, email, otp: _code });
+    const { accessToken } = await authenticateWithOTP({ email, otp: _code });
     localStorage.setItem('accessToken', accessToken);
     try {
-      const { address, preferMethod } = await getUserProfile({
-        baseUrl: PWDLESS_BASE_URL,
-        accessToken,
-      });
+      const { address, preferMethod } = await getUserProfile();
       if (preferMethod !== 'passwordless') {
         if (!waypointWallet) return;
         setSelectedWallet(waypointWallet);
@@ -105,9 +99,9 @@ export function Keyless(props: BoxProps) {
         return;
       }
       triggerConnect();
-      PwdlessProvider.resolveConnect(address, accessToken);
+      PwdlessProvider.resolveConnect({ address, accessToken });
       if (!hideConnectSuccessPrompt) setStep(Step.SUCCESS);
-    } catch {
+    } catch (error) {
       setStep(Step.CREATE_NEW_KEYLESS_WALLET);
     }
   };
@@ -116,23 +110,16 @@ export function Keyless(props: BoxProps) {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) return;
     try {
-      await createKeylessWallet({
-        accessToken,
-        baseUrl: PWDLESS_BASE_URL,
-        socketUrl: KEYGEN_SOCKET_URL,
-      });
-      const { address } = await getUserProfile({
-        baseUrl: PWDLESS_BASE_URL,
-        accessToken,
-      });
+      await createKeylessWallet();
+      const { address } = await getUserProfile();
       triggerConnect();
-      PwdlessProvider.resolveConnect(address, accessToken);
+      PwdlessProvider.resolveConnect({ address, accessToken });
       if (!hideConnectSuccessPrompt) setStep(Step.SUCCESS);
     } catch {}
   };
 
   const handleResend = async () => {
-    initOTPPasswordless({ baseUrl: __internal_baseUrl, clientId, email });
+    initOTPPasswordless({ email });
   };
 
   useEffect(() => {

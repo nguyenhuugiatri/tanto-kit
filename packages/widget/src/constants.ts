@@ -67,3 +67,5 @@ export const RNS_OWNER_OF_ABI = [
 // Waypoint
 export const WAYPOINT_ORIGINS = ['https://id.skymavis.one', 'https://waypoint.roninchain.com'];
 export const WAYPOINT_BASE_URL = 'https://waypoint-api.skymavis.com/v1/rpc/public';
+export const MPC_BASE_URL = 'https://lockbox.skymavis.com/v1/public/rpc';
+export const MPC_SOCKET_URL = 'wss://lockbox.skymavis.com';

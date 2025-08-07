@@ -85,6 +85,7 @@
     "localforage": "1.10.0",
     "lodash.omit": "4.5.0",
     "motion": "12.19.1",
+    "ofetch": "1.4.1",
     "qr-code-styling": "1.9.2",
     "react-hook-form": "7.60.0",
     "ua-parser-js": "2.0.4",

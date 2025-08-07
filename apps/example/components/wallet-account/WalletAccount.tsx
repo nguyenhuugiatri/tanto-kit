@@ -7,7 +7,7 @@ import WillRender from '../will-render/WillRender';
 
 export const WalletAccount = () => {
   const { address, chainId, isConnected, connector } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  const { signMessage } = useSignMessage();
   const { disconnect } = useDisconnect();
   const [show, setShow] = useState(false);
 
@@ -26,7 +26,17 @@ export const WalletAccount = () => {
         <p>ChainId: {chainId}</p>
         <Button
           onClick={async () => {
-            signMessageAsync({ message: 'Hello Ronin Wallet!' }).then(console.log);
+            signMessage(
+              { message: 'Hello Ronin Wallet!' },
+              {
+                onSuccess: data => {
+                  alert(JSON.stringify(data, null, 2));
+                },
+                onError: error => {
+                  alert(JSON.stringify(error, null, 2));
+                },
+              },
+            );
           }}
         >
           Sign Message

@@ -68,6 +68,7 @@ const config = defineConfig({
       'decamelize-keys',
       'eventemitter3',
       'localforage',
+      'ofetch',
     ].some(pkg => id === pkg || id.startsWith(`${pkg}/`) || id.startsWith(`@${pkg}/`)),
   plugins: [
     peerDepsExternal(),
