@@ -7,7 +7,8 @@ import { Box } from './components/box/Box';
 import { Button, IconButton } from './components/button/Button';
 import { FlexModal } from './components/flex-modal/FlexModal';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
-import { WalletOperationType, walletTaskManager } from './web3/WalletTaskManager';
+import { headlessInjector } from './services/headlessInjector';
+import { WalletOperationType } from './services/WalletTaskManager';
 
 interface Task {
   type: WalletOperationType;
@@ -41,7 +42,7 @@ export function ConfirmationModal() {
   const { showConfirmationModal } = useTantoConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
-
+  const walletTaskManager = headlessInjector.resolve('walletTaskManager');
   const closeModal = () => setIsOpen(false);
 
   const handleRemoveTaskOnClose = () => {

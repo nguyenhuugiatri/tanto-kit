@@ -88,6 +88,7 @@
     "ofetch": "1.4.1",
     "qr-code-styling": "1.9.2",
     "react-hook-form": "7.60.0",
+    "typed-inject": "5.0.0",
     "ua-parser-js": "2.0.4",
     "use-resize-observer": "9.1.0",
     "uuid": "11.1.0",

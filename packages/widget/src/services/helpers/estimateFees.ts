@@ -1,10 +1,10 @@
+import { ofetch } from 'ofetch';
 import { Client, Hex, numberToHex } from 'viem';
 import { getGasPrice } from 'viem/actions';
 import { ronin, saigon } from 'viem/chains';
 
-import { httpService } from '../services/HttpService';
+import { isEIP1559CompatibleTransaction } from './transactionTypeUtils';
 import { SupportedTransactionType } from './types';
-import { isEIP1559CompatibleTransaction } from './utils';
 
 export const GAS_SUGGESTION_BASE_URL: Record<number, string> = {
   [ronin.id]: 'https://wallet-manager.skymavis.com/proxy/public/v1/ronin/gas-suggestion',
@@ -29,6 +29,19 @@ export interface EstimateFeesPerGasParams {
   maxPriorityFeePerGas?: Hex;
 }
 
+interface GasPriceLevel {
+  max_priority_fee_per_gas: bigint;
+  max_fee_per_gas: bigint;
+}
+
+interface GasSuggestionResponse {
+  base_fee_per_gas: bigint;
+  exact_base_fee: bigint;
+  low: GasPriceLevel;
+  medium: GasPriceLevel;
+  high: GasPriceLevel;
+}
+
 const handleEIP1559Transaction = async (params: EstimateFeesPerGasParams): Promise<EstimateFeesPerGasReturnType> => {
   const { chainId, maxFeePerGas: maxFeePerGasParam, maxPriorityFeePerGas: maxPriorityFeePerGasParam } = params;
 
@@ -40,13 +53,15 @@ const handleEIP1559Transaction = async (params: EstimateFeesPerGasParams): Promi
     };
   }
 
-  const gasSuggestion = await httpService.getEIP1559GasSuggestionAPI({ baseUrl: GAS_SUGGESTION_BASE_URL[chainId] });
-  const { maxPriorityFeePerGas, maxFeePerGas } = gasSuggestion.medium;
+  const { medium } = await ofetch<GasSuggestionResponse>(`/gas-suggestion`, {
+    baseURL: GAS_SUGGESTION_BASE_URL[chainId],
+  });
+  const { max_priority_fee_per_gas, max_fee_per_gas } = medium;
 
   return {
     gasPrice: '0x0',
-    maxPriorityFeePerGas: maxPriorityFeePerGasParam || numberToHex(maxPriorityFeePerGas),
-    maxFeePerGas: maxFeePerGasParam || numberToHex(maxFeePerGas),
+    maxPriorityFeePerGas: maxPriorityFeePerGasParam || numberToHex(max_priority_fee_per_gas),
+    maxFeePerGas: maxFeePerGasParam || numberToHex(max_fee_per_gas),
   };
 };
 

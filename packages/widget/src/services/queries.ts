@@ -1,30 +1,33 @@
-import { httpService } from './HttpService';
+import { headlessInjector } from './headlessInjector';
+
+const authApi = headlessInjector.resolve('authApi');
+const walletApi = headlessInjector.resolve('walletApi');
 
 export const query = {} as const;
 
 export const mutation = {
   generateNonce: () => ({
     mutationKey: ['tantoGenerateNonce'],
-    mutationFn: httpService.generateNonceAPI,
+    mutationFn: authApi.generateNonce,
   }),
   createAccount: () => ({
     mutationKey: ['tantoCreateAccount'],
-    mutationFn: httpService.authenticateWithSiweAPI,
+    mutationFn: authApi.authenticateWithSiwe,
   }),
   initOTPPasswordless: () => ({
     mutationKey: ['tantoInitOTPPasswordless'],
-    mutationFn: httpService.initOTPPasswordlessAPI,
+    mutationFn: authApi.initOTPPasswordless,
   }),
   authenticateWithOTP: () => ({
     mutationKey: ['tantoAuthenticateWithOTP'],
-    mutationFn: httpService.authenticateWithOtpAPI,
+    mutationFn: authApi.authenticateWithOtp,
   }),
   getUserProfile: () => ({
     mutationKey: ['tantoGetUserProfileAPI'],
-    mutationFn: httpService.getUserProfileAPI,
+    mutationFn: walletApi.getUserProfile,
   }),
   createKeylessWallet: () => ({
     mutationKey: ['tantoCreateKeylessWallet'],
-    mutationFn: httpService.createKeylessWalletAPI,
+    mutationFn: walletApi.createKeylessWallet,
   }),
 } as const;

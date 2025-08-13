@@ -2,6 +2,7 @@ import { type Address, Client, createClient, Hex, hexToBigInt, http, isAddress, 
 import { estimateGas, getTransactionCount } from 'viem/actions';
 
 import { estimateFeesPerGas } from './estimateFees';
+import { isSupportedTransaction } from './transactionTypeUtils';
 import {
   ChainParams,
   PAYER_INFO,
@@ -11,7 +12,6 @@ import {
   TransactionParams,
   TransactionType,
 } from './types';
-import { isSupportedTransaction } from './utils';
 
 export const DEFAULT_VALUE = '0x0';
 export const DEFAULT_DATA = '0x';

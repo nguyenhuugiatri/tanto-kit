@@ -69,6 +69,7 @@ const config = defineConfig({
       'eventemitter3',
       'localforage',
       'ofetch',
+      'typed-inject',
     ].some(pkg => id === pkg || id.startsWith(`${pkg}/`) || id.startsWith(`@${pkg}/`)),
   plugins: [
     peerDepsExternal(),

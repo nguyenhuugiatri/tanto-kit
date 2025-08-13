@@ -16,7 +16,7 @@ const jwtDecode = (token: string) => {
     const payload = JSON.parse(jsonPayload);
     return { sub: payload.sub };
   } catch (e) {
-    console.error('Failed to decode JWT:', e);
+    console.debug('Failed to decode JWT:', e);
     return { sub: '' }; // Return a default or throw an error as appropriate
   }
 };

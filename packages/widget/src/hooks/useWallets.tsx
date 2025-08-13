@@ -11,9 +11,9 @@ import { isDesktop, isMobile } from '../utils/userAgent';
 import {
   isCoinbaseConnector,
   isInjectedConnector,
-  isPwdlessConnector,
   isRoninExtensionInstalled,
   isRoninInAppBrowser,
+  isRoninWalletHeadlessConnector,
   isSafeConnector,
   isWaypointConnector,
   isWCConnector,
@@ -37,7 +37,7 @@ function getWalletInstallationStatus(
     isSafeConnector(id) ||
     isCoinbaseConnector(id) ||
     isWaypointConnector(id) ||
-    isPwdlessConnector(id) ||
+    isRoninWalletHeadlessConnector(id) ||
     isWCConnector(id) ||
     isInjectedConnector(type)
   );
@@ -82,7 +82,7 @@ export function useWallets() {
     const walletMap = new Map(wallets.map(wallet => [wallet.id, wallet]));
     const safeWallet = isSafe ? walletMap.get(WALLET_IDS.SAFE) : null;
     const waypointWallet = walletMap.get(WALLET_IDS.WAYPOINT);
-    const pwdlessWallet = walletMap.get(WALLET_IDS.PWDLESS);
+    const roninHeadlessWallet = walletMap.get(WALLET_IDS.RONIN_WALLET_HEADLESS);
     const coinbaseWallet = walletMap.get(WALLET_IDS.COINBASE_WALLET);
     const wcWallet = walletMap.get(WALLET_IDS.WALLET_CONNECT);
     const roninExtensionWallet =
@@ -109,7 +109,7 @@ export function useWallets() {
 
     return {
       waypointWallet,
-      pwdlessWallet,
+      pwdlessWallet: roninHeadlessWallet,
       roninExtensionWallet,
       roninMobileWallet,
       roninInAppBrowserWallet,

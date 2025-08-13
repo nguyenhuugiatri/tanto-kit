@@ -23,7 +23,7 @@ export default function WidgetExample() {
           theme={getTheme()}
           config={{
             clientId: 'c470d211-493b-4f9b-978f-e5d00ace0232',
-            // createAccountOnConnect: true,
+            createAccountOnConnect: true,
             __internal_waypointBaseUrl: 'https://waypoint-api.skymavis.one/v1/rpc/public',
             __internal_mpcBaseUrl: 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc',
             __internal_mpcSocketUrl: 'wss://project-x.skymavis.one',

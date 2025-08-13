@@ -1,16 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box, BoxProps } from '../../components/box/Box';
-import { useTantoConfig } from '../../contexts/tanto/useTantoConfig';
 import { useWidgetConnect } from '../../contexts/widget-connect/useWidgetConnect';
 import { useWidgetRouter } from '../../contexts/widget-router/useWidgetRouter';
+import { authEventEmitter } from '../../hooks/useAuthEffect';
 import { useConnectAndAuth } from '../../hooks/useConnectAndAuth';
+import { headlessInjector } from '../../services/headlessInjector';
 import { mutation } from '../../services/queries';
+import { ConnectState } from '../../types/connect';
 import { Route } from '../../types/route';
 import { getSecondsFromMessage } from '../../utils/string';
-import { PwdlessProvider } from '../../web3/PwdlessProvider';
 import { KeylessHeader } from './components/KeylessHeader';
 import { StepCreatingKeyless } from './components/StepCreatingKeyless';
 import { StepOTP } from './components/StepOTP';
@@ -28,7 +29,7 @@ interface EmailFormData {
   email: string;
 }
 
-export function getOTPError(error: { code?: number; message: string }) {
+export function getOTPError(error: { code?: number; message: string }): string {
   switch (error.code) {
     case 400046:
       return 'Invalid code. Please try again.';
@@ -40,95 +41,123 @@ export function getOTPError(error: { code?: number; message: string }) {
 export function Keyless(props: BoxProps) {
   const [step, setStep] = useState(Step.SELECT_METHOD);
   const [email, setEmail] = useState('');
-  const { goBack: goBackRouter, goTo: goToRouter } = useWidgetRouter();
-  const { hideConnectSuccessPrompt } = useTantoConfig();
   const [waitSeconds, setWaitSeconds] = useState(0);
-  const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
-  const { connect: triggerConnect } = useConnectAndAuth({ connector: selectedConnector });
+  const accessTokenRef = useRef<string | null>(null);
 
-  const {
-    mutateAsync: authenticateWithOTP,
-    isPending: isAuthenticateWithOTPPending,
-    error: authenticateWithOTPError,
-    reset: resetAuthenticateWithOTP,
-    isSuccess: isAuthenticateWithOTPSuccess,
-  } = useMutation(mutation.authenticateWithOTP());
-  const {
-    mutateAsync: initOTPPasswordless,
-    isPending: isInitOTPPasswordlessPending,
-    reset: resetInitOTPPasswordless,
-  } = useMutation({
+  const { goBack: goBackRouter, goTo: goToRouter } = useWidgetRouter();
+  const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
+  const { connect, status: connectStatus } = useConnectAndAuth({
+    connector: selectedConnector,
+  });
+
+  const otpPasswordlessMutation = useMutation({
     ...mutation.initOTPPasswordless(),
     onSuccess: () => {
       setWaitSeconds(0);
-      resetAuthenticateWithOTP();
+      authenticateOTPMutation.reset();
     },
-    onError: error => setWaitSeconds(getSecondsFromMessage(error.message)),
+    onError: (error: Error) => setWaitSeconds(getSecondsFromMessage(error.message)),
   });
-  const { mutateAsync: createKeylessWallet } = useMutation(mutation.createKeylessWallet());
 
-  const { mutateAsync: getUserProfile, isPending: isGetUserProfilePending } = useMutation(mutation.getUserProfile());
+  const authenticateOTPMutation = useMutation(mutation.authenticateWithOTP());
+  const createKeylessWalletMutation = useMutation(mutation.createKeylessWallet());
+  const getUserProfileMutation = useMutation(mutation.getUserProfile());
 
-  const otpError = authenticateWithOTPError ? getOTPError(authenticateWithOTPError) : undefined;
+  const otpError = authenticateOTPMutation.error ? getOTPError(authenticateOTPMutation.error) : undefined;
 
-  const back = () => {
-    if (step === Step.SELECT_METHOD) return goBackRouter();
-    return setStep(step - 1);
-  };
-
-  const handleEmailSubmit = async ({ email }: EmailFormData) => {
-    try {
-      await initOTPPasswordless({ email });
-      setStep(Step.OTP);
-    } catch {}
-  };
-
-  const handleOTPChange = () => {
-    resetAuthenticateWithOTP();
-  };
-
-  const handleSubmitOTP = async (_code: string) => {
-    const { accessToken } = await authenticateWithOTP({ email, otp: _code });
-    localStorage.setItem('accessToken', accessToken);
-    try {
-      const { address, preferMethod } = await getUserProfile();
-      if (preferMethod !== 'passwordless') {
-        if (!waypointWallet) return;
-        setSelectedWallet(waypointWallet);
-        goToRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
-        return;
-      }
-      triggerConnect();
-      PwdlessProvider.resolveConnect({ address, accessToken });
-      if (!hideConnectSuccessPrompt) setStep(Step.SUCCESS);
-    } catch (error) {
-      setStep(Step.CREATE_NEW_KEYLESS_WALLET);
+  const handleBack = useCallback(() => {
+    if (step === Step.SELECT_METHOD) {
+      goBackRouter();
+    } else {
+      setStep(step - 1);
     }
-  };
+  }, [step, goBackRouter]);
 
-  const handleCreateKeylessWallet = async () => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) return;
+  const handleEmailSubmit = useCallback(
+    async ({ email }: EmailFormData) => {
+      try {
+        await otpPasswordlessMutation.mutateAsync({ email });
+        setEmail(email);
+        setStep(Step.OTP);
+      } catch (error) {
+        console.debug('Failed to send OTP:', error);
+      }
+    },
+    [otpPasswordlessMutation],
+  );
+
+  const handleOTPChange = useCallback(() => {
+    authenticateOTPMutation.reset();
+  }, [authenticateOTPMutation]);
+
+  const handleSubmitOTP = useCallback(
+    async (code: string) => {
+      try {
+        const { accessToken } = await authenticateOTPMutation.mutateAsync({
+          email,
+          otp: code,
+        });
+        accessTokenRef.current = accessToken;
+
+        const { preferMethod } = await getUserProfileMutation.mutateAsync();
+
+        if (preferMethod !== 'passwordless') {
+          if (waypointWallet) {
+            setSelectedWallet(waypointWallet);
+            goToRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
+          }
+          return;
+        }
+        connect();
+      } catch (error) {
+        console.debug('OTP verification failed:', error);
+        setStep(Step.CREATE_NEW_KEYLESS_WALLET);
+      }
+    },
+    [email, authenticateOTPMutation, getUserProfileMutation, waypointWallet, setSelectedWallet, goToRouter, connect],
+  );
+
+  const handleCreateKeylessWallet = useCallback(async () => {
+    const accessToken = accessTokenRef.current;
+    if (!accessToken) {
+      console.debug('No access token available');
+      return;
+    }
+
     try {
-      await createKeylessWallet();
-      const { address } = await getUserProfile();
-      triggerConnect();
-      PwdlessProvider.resolveConnect({ address, accessToken });
-      if (!hideConnectSuccessPrompt) setStep(Step.SUCCESS);
-    } catch {}
-  };
+      await createKeylessWalletMutation.mutateAsync();
+      connect();
+    } catch (error) {
+      console.debug('Failed to create keyless wallet:', error);
+    }
+  }, [createKeylessWalletMutation, getUserProfileMutation, connect]);
 
-  const handleResend = async () => {
-    initOTPPasswordless({ email });
-  };
+  const handleResend = useCallback(() => {
+    otpPasswordlessMutation.mutate({ email });
+  }, [email, otpPasswordlessMutation]);
 
   useEffect(() => {
-    resetInitOTPPasswordless();
-    resetAuthenticateWithOTP();
+    otpPasswordlessMutation.reset();
+    authenticateOTPMutation.reset();
     setWaitSeconds(0);
   }, [email]);
 
-  useEffect(() => {}, [step]);
+  useEffect(() => {
+    if (connectStatus === ConnectState.SUCCESS) {
+      const headlessConfig = headlessInjector.resolve('headlessConfig');
+      const sessionRepository = headlessInjector.resolve('sessionRepository');
+      Promise.all([sessionRepository.getAccessToken(), sessionRepository.getAddress()]).then(([token, address]) => {
+        if (token && address) {
+          authEventEmitter.emit('success', {
+            chainId: headlessConfig.chain.id,
+            address,
+            token,
+          });
+        }
+      });
+      setStep(Step.SUCCESS);
+    }
+  }, [connectStatus]);
 
   const showBackButton = ![Step.SUCCESS, Step.CREATE_NEW_KEYLESS_WALLET].includes(step);
   const showLogo = step === Step.SELECT_METHOD;
@@ -138,36 +167,39 @@ export function Keyless(props: BoxProps) {
     <Box fullWidth vertical {...props}>
       <KeylessHeader
         showBackButton={showBackButton}
-        onBack={back}
+        onBack={handleBack}
         title={title}
         showLogo={showLogo}
         step={step}
         totalSteps={2}
       />
 
-      <TransitionedView viewKey={step}>
+      <TransitionedView viewKey={step + connectStatus}>
         {step === Step.SELECT_METHOD && (
           <StepSelectProvider
             onSubmit={handleEmailSubmit}
             waitSeconds={waitSeconds}
-            isLoading={isInitOTPPasswordlessPending}
+            isLoading={otpPasswordlessMutation.isPending}
             onEmailChange={setEmail}
           />
         )}
+
         {step === Step.OTP && (
           <StepOTP
             email={email}
             onOTPChange={handleOTPChange}
             onOTPSubmit={handleSubmitOTP}
             onResend={handleResend}
-            isLoading={isAuthenticateWithOTPPending || isGetUserProfilePending}
+            isLoading={authenticateOTPMutation.isPending || getUserProfileMutation.isPending}
             error={otpError}
-            isSuccess={isAuthenticateWithOTPSuccess}
+            isSuccess={authenticateOTPMutation.isSuccess}
           />
         )}
+
         {step === Step.CREATE_NEW_KEYLESS_WALLET && (
           <StepCreatingKeyless handleCreateKeylessWallet={handleCreateKeylessWallet} />
         )}
+
         {step === Step.SUCCESS && <StepSuccess />}
       </TransitionedView>
     </Box>

@@ -9,9 +9,9 @@ import type { CoinbaseWalletParameters, WalletConnectParameters } from 'wagmi/co
 import { coinbaseWallet, safe, walletConnect } from 'wagmi/connectors';
 
 import { RONIN_WALLET_WEB_LINK } from './constants';
+import { headlessConnector } from './services/headlessWagmiConnector';
 import { getVersionInfo } from './utils/common';
 import { TantoWidgetError, TantoWidgetErrorCodes } from './utils/errors';
-import { pwdlessConnector } from './web3/pwdlessConnector';
 
 export const RONIN_WALLET_METADATA = {
   projectId: 'd2ef97836db7eb390bcb2c1e9847ecdc',
@@ -44,9 +44,12 @@ export interface KeylessWalletConfig {
   waypointOrigin?: string;
   scopes?: WaypointScope[];
   popupCloseDelay?: number;
+  headless?: boolean;
 }
 
-export interface PasswordlessWalletConfig {}
+export interface PasswordlessWalletConfig {
+  chainId?: number;
+}
 
 export interface AppMetadata {
   appName?: string;
@@ -63,7 +66,6 @@ export type DefaultConfig = Prettify<
   Partial<Omit<CreateConfigParameters, 'client' | 'connectors'>> & {
     appMetadata?: AppMetadata;
     walletConnectConfig?: WalletEnableConfig & Partial<Omit<WalletConnectParameters, 'showQrModal'>>;
-    passwordlessWalletConfig?: WalletEnableConfig & PasswordlessWalletConfig;
     keylessWalletConfig?: WalletEnableConfig & KeylessWalletConfig;
     coinbaseWalletConfig?: WalletEnableConfig & Partial<CoinbaseWalletParameters>;
   }
@@ -87,10 +89,9 @@ const createRoninConnector = (): CreateConnectorFn => roninWallet();
 
 const createSafeConnector = (): CreateConnectorFn => safe();
 
-const createPwdlessConnector = (): CreateConnectorFn =>
-  pwdlessConnector({
-    baseUrl: 'https://growing-narwhal-infinitely.ngrok-free.app/v1/public/rpc',
-    chainId: 2021,
+const createRoninWalletHeadlessConnector = (config: DefaultConfig['keylessWalletConfig']): CreateConnectorFn =>
+  headlessConnector({
+    chainId: config?.chainId,
   });
 
 function createWaypointConnector(config: DefaultConfig['keylessWalletConfig']): CreateConnectorFn {
@@ -132,14 +133,15 @@ function createCoinbaseConnector(
 export function createConnectors(config: DefaultConfig): CreateConnectorFn[] {
   const appMetadata = createAppMetadata(config.appMetadata);
   const connectors: CreateConnectorFn[] = [createRoninConnector(), createSafeConnector()];
-  const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig, passwordlessWalletConfig } = config;
+  const { keylessWalletConfig, walletConnectConfig, coinbaseWalletConfig } = config;
   if (keylessWalletConfig?.enable !== false)
     connectors.push(createWaypointConnector(omit(keylessWalletConfig, 'enable')));
   if (walletConnectConfig?.enable !== false)
     connectors.push(createWalletConnectConnector(appMetadata, omit(walletConnectConfig, 'enable')));
   if (coinbaseWalletConfig?.enable)
     connectors.push(createCoinbaseConnector(appMetadata, omit(coinbaseWalletConfig, 'enable')));
-  if (passwordlessWalletConfig?.enable) connectors.push(createPwdlessConnector());
+  if (coinbaseWalletConfig?.enable && keylessWalletConfig?.headless)
+    connectors.push(createRoninWalletHeadlessConnector(omit(keylessWalletConfig, 'enable', 'headless')));
   return connectors;
 }
 

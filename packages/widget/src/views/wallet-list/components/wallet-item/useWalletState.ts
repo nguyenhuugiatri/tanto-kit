@@ -5,7 +5,7 @@ import { useIsMobileView } from '../../../../hooks/useIsMobileView';
 import type { Wallet } from '../../../../types/wallet';
 import {
   isInjectedConnector,
-  isPwdlessConnector,
+  isRoninWalletHeadlessConnector,
   isWaypointConnector,
   isWCConnector,
 } from '../../../../utils/walletDetection';
@@ -18,7 +18,7 @@ export function useWalletState(wallet: Wallet) {
 
   return useMemo(() => {
     const isWaypointWallet = isWaypointConnector(connector?.id);
-    const isPwdlessWallet = isPwdlessConnector(connector?.id);
+    const isPwdlessWallet = isRoninWalletHeadlessConnector(connector?.id);
     const isWCWallet = isWCConnector(connector?.id);
     const isInjected = isInjectedConnector(connector?.type);
     const isMarkedConnected = (isWaypointWallet && markKeylessWalletConnected) || (isWCWallet && markWCConnected);
