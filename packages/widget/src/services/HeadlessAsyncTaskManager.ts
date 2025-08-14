@@ -6,42 +6,32 @@ import { TransactionParams } from './helpers/types';
 export enum HeadlessOperationType {
   PersonalSign = 'wallet:personal-sign',
   SignTypedDataV4 = 'wallet:sign-typed-data-v4',
-  SignTransaction = 'wallet:sign-transaction',
+  SendTransaction = 'wallet:send-transaction',
 }
 
-export interface HeadlessOperationConfig {
-  [HeadlessOperationType.PersonalSign]: {
-    params: [data: Hex, address: Address];
-    result: void;
-  };
-  [HeadlessOperationType.SignTypedDataV4]: {
-    params: [address: Address, data: TypedDataDefinition | string];
-    result: void;
-  };
-  [HeadlessOperationType.SignTransaction]: {
-    params: [transaction: TransactionParams];
-    result: void;
-  };
+export interface HeadlessOperationParamsMap {
+  [HeadlessOperationType.PersonalSign]: [data: Hex, address: Address];
+  [HeadlessOperationType.SignTypedDataV4]: [address: Address, data: TypedDataDefinition | string];
+  [HeadlessOperationType.SendTransaction]: [transaction: TransactionParams];
 }
 
-export type HeadlessOperationParamsMap = {
-  [K in keyof HeadlessOperationConfig]: HeadlessOperationConfig[K]['params'];
-};
-
-export type HeadlessOperationResultMap = {
-  [K in keyof HeadlessOperationConfig]: HeadlessOperationConfig[K]['result'];
-};
+// Just for confirmation, no result is needed
+export interface HeadlessOperationResultMap {
+  [HeadlessOperationType.PersonalSign]: void;
+  [HeadlessOperationType.SignTypedDataV4]: void;
+  [HeadlessOperationType.SendTransaction]: void;
+}
 
 export class HeadlessAsyncTaskManager extends AsyncTaskManager<
   HeadlessOperationType,
-  HeadlessOperationResultMap,
-  HeadlessOperationParamsMap
+  HeadlessOperationParamsMap,
+  HeadlessOperationResultMap
 > {}
 
 export type HeadlessTask = {
-  [K in HeadlessOperationType]: {
+  [T in HeadlessOperationType]: {
     id: string;
-    operationType: K;
-    params: HeadlessOperationParamsMap[K];
+    operationType: T;
+    params: HeadlessOperationParamsMap[T];
   };
 }[HeadlessOperationType];

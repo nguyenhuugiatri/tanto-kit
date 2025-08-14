@@ -1,5 +1,4 @@
 import EventEmitter from 'eventemitter3';
-import { v4 as uuidv4 } from 'uuid';
 import type { Address, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import { toHex } from 'viem';
 
@@ -47,6 +46,15 @@ export class HeadlessProvider extends EventEmitter {
     super();
   }
 
+  getChainId(): number {
+    return this.walletService.getChainId();
+  }
+
+  getAccounts(): Address[] {
+    const address = this.walletService.getAddress();
+    return address ? [address] : [];
+  }
+
   async isSignable(): Promise<boolean> {
     try {
       await this.walletService.getSignableAddress();
@@ -63,15 +71,6 @@ export class HeadlessProvider extends EventEmitter {
 
   disconnect(): void {
     this.walletService.disconnect();
-  }
-
-  getChainId(): number {
-    return this.walletService.getChainId();
-  }
-
-  getAccounts(): Address[] {
-    const address = this.walletService.getAddress();
-    return address ? [address] : [];
   }
 
   async requestAccounts(): Promise<Address[]> {
@@ -96,13 +95,7 @@ export class HeadlessProvider extends EventEmitter {
     params: HeadlessOperationParamsMap[T],
     executor: () => Promise<R>,
   ) {
-    const { promise } = this.headlessAsyncTaskManager.createTask({
-      operationType,
-      id: uuidv4(),
-      params,
-    });
-
-    await promise;
+    await this.headlessAsyncTaskManager.createTask({ operationType, params });
     return executor();
   }
 
@@ -130,7 +123,7 @@ export class HeadlessProvider extends EventEmitter {
         ) as ReturnType;
 
       case 'eth_sendTransaction':
-        return this.waitForUserConfirmation(HeadlessOperationType.SignTransaction, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.SendTransaction, params, () =>
           this.sendTransaction(params),
         ) as ReturnType;
 

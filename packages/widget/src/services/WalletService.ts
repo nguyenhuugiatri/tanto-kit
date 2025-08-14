@@ -8,10 +8,10 @@ import { TransactionParams } from './helpers/types';
 import { SessionRepository } from './SessionRepository';
 
 export class WalletService {
+  static inject = ['headlessConfig', 'sessionRepository', 'walletApi'] as const;
+
   private address: Address | null = null;
   private publicClient: PublicClient;
-
-  static inject = ['headlessConfig', 'sessionRepository', 'walletApi'] as const;
 
   constructor(
     private headlessConfig: HeadlessConfig,
@@ -22,6 +22,18 @@ export class WalletService {
       chain: this.headlessConfig.chain,
       transport: http(this.headlessConfig.rpcUrl),
     });
+  }
+
+  getAddress(): Address | null {
+    return this.address;
+  }
+
+  getChainId(): number {
+    return this.headlessConfig.chain.id;
+  }
+
+  getPublicClient(): PublicClient {
+    return this.publicClient;
   }
 
   async getSignableAddress(): Promise<Address> {
@@ -56,11 +68,6 @@ export class WalletService {
         new Error('Failed to fetch user profile. Please reconnect your wallet.', { cause: error }),
       );
     }
-  }
-
-  private async withSignable<T>(fn: (address: Address) => Promise<T>): Promise<T> {
-    const address = await this.getSignableAddress();
-    return fn(address);
   }
 
   personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
@@ -111,20 +118,13 @@ export class WalletService {
     }
   };
 
-  getAddress(): Address | null {
-    return this.address;
-  }
-
-  getChainId(): number {
-    return this.headlessConfig.chain.id;
-  }
-
-  getPublicClient(): PublicClient {
-    return this.publicClient;
-  }
-
   async disconnect(): Promise<void> {
     this.address = null;
     await this.sessionRepository.clear();
+  }
+
+  private async withSignable<T>(fn: (address: Address) => Promise<T>): Promise<T> {
+    const address = await this.getSignableAddress();
+    return fn(address);
   }
 }

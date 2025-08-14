@@ -1,4 +1,5 @@
 import { EventEmitter } from 'eventemitter3';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Deferred } from './Defer';
 
@@ -10,8 +11,8 @@ enum AsyncTaskManagerEvent {
 
 interface AsyncTaskEventMap<
   OperationType extends string,
-  OperationResultMap extends Record<OperationType, any>,
-  OperationParamsMap extends Record<OperationType, any>,
+  OperationParamsMap extends Record<OperationType, unknown>,
+  OperationResultMap extends Record<OperationType, unknown>,
 > {
   [AsyncTaskManagerEvent.TaskCreated]: {
     taskId: string;
@@ -30,47 +31,40 @@ interface AsyncTaskEventMap<
   };
 }
 
-class AsyncTaskManagerError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AsyncTaskManagerError';
-  }
-}
-
 export class AsyncTaskManager<
   OperationType extends string,
-  OperationResultMap extends Record<OperationType, any>,
-  OperationParamsMap extends Record<OperationType, any>,
-> extends EventEmitter<AsyncTaskEventMap<OperationType, OperationResultMap, OperationParamsMap>> {
+  OperationParamsMap extends Record<OperationType, unknown>,
+  OperationResultMap extends Record<OperationType, unknown>,
+> extends EventEmitter<AsyncTaskEventMap<OperationType, OperationParamsMap, OperationResultMap>> {
   private readonly activeTasks = new Map<
     string,
     {
-      deferred: Deferred<any>;
+      deferred: Deferred<OperationResultMap[OperationType]>;
       operationType: OperationType;
+      params?: OperationParamsMap[OperationType];
     }
   >();
 
-  createTask<T extends OperationType>(opts: { operationType: T; id?: string; params?: OperationParamsMap[T] }) {
-    const taskId = opts.id ? `${opts.operationType}:${opts.id}` : opts.operationType;
-    if (this.activeTasks.has(taskId)) throw new AsyncTaskManagerError(`Task already exists: ${taskId}`);
-
-    const deferred = new Deferred<OperationResultMap[T]>();
+  createTask({ operationType, params }: { operationType: OperationType; params?: OperationParamsMap[OperationType] }) {
+    const taskId = this.generateTaskId();
+    const deferred = new Deferred<OperationResultMap[OperationType]>();
 
     this.activeTasks.set(taskId, {
       deferred,
-      operationType: opts.operationType,
+      operationType,
+      params,
     });
 
     this.emit(AsyncTaskManagerEvent.TaskCreated, {
       taskId,
-      operationType: opts.operationType,
-      params: opts.params,
+      operationType,
+      params,
     });
 
-    return { taskId, promise: deferred.promise };
+    return deferred.promise;
   }
 
-  resolveTask<T extends OperationType>(taskId: string, result?: OperationResultMap[T]) {
+  resolveTask(taskId: string, result?: OperationResultMap[OperationType]) {
     const task = this.activeTasks.get(taskId);
     if (!task) return;
 
@@ -102,8 +96,8 @@ export class AsyncTaskManager<
     listener: (
       payload: AsyncTaskEventMap<
         OperationType,
-        OperationResultMap,
-        OperationParamsMap
+        OperationParamsMap,
+        OperationResultMap
       >[AsyncTaskManagerEvent.TaskCreated],
     ) => void,
   ) {
@@ -115,8 +109,8 @@ export class AsyncTaskManager<
     listener: (
       payload: AsyncTaskEventMap<
         OperationType,
-        OperationResultMap,
-        OperationParamsMap
+        OperationParamsMap,
+        OperationResultMap
       >[AsyncTaskManagerEvent.TaskResolved],
     ) => void,
   ) {
@@ -128,8 +122,8 @@ export class AsyncTaskManager<
     listener: (
       payload: AsyncTaskEventMap<
         OperationType,
-        OperationResultMap,
-        OperationParamsMap
+        OperationParamsMap,
+        OperationResultMap
       >[AsyncTaskManagerEvent.TaskRejected],
     ) => void,
   ) {
@@ -141,5 +135,9 @@ export class AsyncTaskManager<
     if (!this.activeTasks.has(taskId)) return false;
     this.rejectTask(taskId, reason);
     return true;
+  }
+
+  private generateTaskId() {
+    return uuidv4();
   }
 }

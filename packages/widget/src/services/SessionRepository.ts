@@ -45,6 +45,12 @@ export class SessionRepository {
     await this.asyncStorage.setItem(SessionRepository.REFRESH_TOKEN_STORAGE_KEY, value);
   }
 
+  async isAccessTokenExpired(): Promise<boolean> {
+    const exp = await this.asyncStorage.getItem<number>(SessionRepository.ACCESS_TOKEN_EXP_KEY);
+    if (!exp) return true;
+    return exp < Date.now();
+  }
+
   async clear(): Promise<void> {
     await Promise.all([
       this.asyncStorage.removeItem(SessionRepository.ADDRESS_STORAGE_KEY),
@@ -52,12 +58,6 @@ export class SessionRepository {
       this.asyncStorage.removeItem(SessionRepository.REFRESH_TOKEN_STORAGE_KEY),
       this.asyncStorage.removeItem(SessionRepository.ACCESS_TOKEN_EXP_KEY),
     ]);
-  }
-
-  async isAccessTokenExpired(): Promise<boolean> {
-    const exp = await this.asyncStorage.getItem<number>(SessionRepository.ACCESS_TOKEN_EXP_KEY);
-    if (!exp) return true;
-    return exp < Date.now();
   }
 
   private getTokenExp(token: string): number {
