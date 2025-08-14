@@ -3,11 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Address, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import { toHex } from 'viem';
 
-import { HeadlessAsyncTaskManager, HeadlessOperationType } from './HeadlessAsyncTaskManager';
+import {
+  HeadlessAsyncTaskManager,
+  HeadlessOperationParamsMap,
+  HeadlessOperationType,
+} from './HeadlessAsyncTaskManager';
 import type { TransactionParams } from './helpers/types';
 import { WalletService } from './WalletService';
 
-export type HeadlessRequestSchema = [
+export type HeadlessProviderRpcSchema = [
   ...PublicRpcSchema,
   {
     Method: 'eth_accounts';
@@ -43,7 +47,7 @@ export class HeadlessProvider extends EventEmitter {
     super();
   }
 
-  async isAuthenticated(): Promise<boolean> {
+  async isSignable(): Promise<boolean> {
     try {
       await this.walletService.getSignableAddress();
       return true;
@@ -54,17 +58,7 @@ export class HeadlessProvider extends EventEmitter {
 
   async connect(): Promise<{ address: Address }> {
     const signableAddress = await this.walletService.getSignableAddress();
-    if (signableAddress) {
-      return { address: signableAddress };
-    }
-
-    // Wait for fetch profile and save address
-    const { promise } = this.headlessAsyncTaskManager.createTask({
-      operationType: HeadlessOperationType.Connect,
-    });
-
-    const { address } = await promise;
-    return { address };
+    return { address: signableAddress };
   }
 
   disconnect(): void {
@@ -97,22 +91,22 @@ export class HeadlessProvider extends EventEmitter {
     return this.walletService.sendTransaction(params);
   }
 
-  private async waitForUserConfirmation<T>(
-    operationType: HeadlessOperationType,
-    params: any,
-    executor: () => Promise<T>,
-  ): Promise<T> {
-    const { promise: confirmPromise } = this.headlessAsyncTaskManager.createTask({
+  private async waitForUserConfirmation<T extends HeadlessOperationType, R>(
+    operationType: T,
+    params: HeadlessOperationParamsMap[T],
+    executor: () => Promise<R>,
+  ) {
+    const { promise } = this.headlessAsyncTaskManager.createTask({
       operationType,
       id: uuidv4(),
       params,
     });
 
-    await confirmPromise;
+    await promise;
     return executor();
   }
 
-  async request<ReturnType = unknown>(args: EIP1193Parameters<HeadlessRequestSchema>): Promise<ReturnType> {
+  async request<ReturnType = unknown>(args: EIP1193Parameters<HeadlessProviderRpcSchema>): Promise<ReturnType> {
     const { method, params } = args;
 
     switch (method) {
@@ -126,12 +120,12 @@ export class HeadlessProvider extends EventEmitter {
         return toHex(this.getChainId()) as ReturnType;
 
       case 'personal_sign':
-        return this.waitForUserConfirmation(HeadlessOperationType.SignMessage, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.PersonalSign, params, () =>
           this.personalSign(params),
         ) as ReturnType;
 
       case 'eth_signTypedData_v4':
-        return this.waitForUserConfirmation(HeadlessOperationType.SignMessage, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.SignTypedDataV4, params, () =>
           this.signTypedDataV4(params),
         ) as ReturnType;
 

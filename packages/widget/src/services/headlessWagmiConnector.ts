@@ -31,7 +31,7 @@ export function headlessConnector(options: headlessConnectorOptions) {
           chainId: provider.getChainId(),
         };
       },
-      isAuthorized: async () => provider.isAuthenticated(),
+      isAuthorized: async () => provider.isSignable(),
       disconnect: async () => provider.disconnect(),
 
       // TODO

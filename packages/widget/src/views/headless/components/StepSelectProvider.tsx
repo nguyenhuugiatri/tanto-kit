@@ -15,7 +15,7 @@ const emailSchema = z.object({
 
 type EmailFormData = z.infer<typeof emailSchema>;
 
-export interface StepSelectProviderProps {
+interface StepSelectProviderProps {
   isLoading?: boolean;
   defaultEmail?: string;
   waitSeconds?: number;

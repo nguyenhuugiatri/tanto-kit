@@ -1,7 +1,6 @@
 import camelcaseKeys from 'camelcase-keys';
 import decamelizeKeys from 'decamelize-keys';
 import { type $Fetch, type FetchContext, ofetch } from 'ofetch';
-import { Address } from 'viem';
 
 import { HeadlessConfig } from '../HeadlessConfig';
 import { SessionRepository } from '../SessionRepository';
@@ -25,13 +24,6 @@ declare module 'ofetch' {
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
-}
-
-export interface UserProfileResponse {
-  uuid: string;
-  address: Address;
-  hasSupportPwdless: boolean;
-  preferMethod: 'recovery_password' | 'passwordless';
 }
 
 export class HttpClient {

@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useCountdown } from '../../hooks/useCountdown';
 
-export interface CountdownProps {
+interface CountdownProps {
   pendingTime: number;
   children: (props: { count: number; start: () => void }) => React.ReactNode;
 }

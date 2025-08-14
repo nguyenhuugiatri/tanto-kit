@@ -32,7 +32,7 @@ interface EmailFormData {
   email: string;
 }
 
-export function getOTPError(error: { code?: number; message: string }): string {
+function getOTPError(error: { code?: number; message: string }): string {
   switch (error.code) {
     case 400046:
       return 'Invalid code. Please try again.';

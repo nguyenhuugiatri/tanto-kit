@@ -125,7 +125,7 @@ function Close(props: DialogCloseProps) {
   return <CloseComponent {...props} />;
 }
 
-export interface FlexModalProps {
+interface FlexModalProps {
   children: ReactNode;
   defaultOpen?: boolean;
   open?: boolean;

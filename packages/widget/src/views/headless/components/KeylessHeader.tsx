@@ -7,7 +7,7 @@ import { Box } from '../../../components/box/Box';
 import { IconButton } from '../../../components/button/Button';
 import { SimpleStepper } from '../../../components/simple-stepper/SimpleStepper';
 
-export interface KeylessHeaderProps {
+interface KeylessHeaderProps {
   title?: string | null;
   step?: number | null;
   totalSteps?: number;

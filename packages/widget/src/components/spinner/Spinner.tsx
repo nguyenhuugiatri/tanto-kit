@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 
 import { spin } from '../../styles/animations';
 
-export interface SpinnerProps {
+interface SpinnerProps {
   size?: 'small' | 'default' | 'large' | 'xsmall';
   color?: string;
 }

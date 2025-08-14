@@ -6,22 +6,22 @@ import { ronin, saigon } from 'viem/chains';
 import { isEIP1559CompatibleTransaction } from './transactionTypeUtils';
 import { SupportedTransactionType } from './types';
 
-export const GAS_SUGGESTION_BASE_URL: Record<number, string> = {
+const GAS_SUGGESTION_BASE_URL: Record<number, string> = {
   [ronin.id]: 'https://wallet-manager.skymavis.com/proxy/public/v1/ronin/gas-suggestion',
   [saigon.id]: 'https://wallet-manager-stg.skymavis.one/proxy/public/v1/ronin-testnet/gas-suggestion',
 } as const;
 
-export const GAS_PRICE_BUFFER_PERCENTAGE = 2; // 2%
+const GAS_PRICE_BUFFER_PERCENTAGE = 2; // 2%
 
-export const applyBuffer = (value: bigint, percentage: number): bigint => (value * BigInt(100 + percentage)) / 100n;
+const applyBuffer = (value: bigint, percentage: number): bigint => (value * BigInt(100 + percentage)) / 100n;
 
-export interface EstimateFeesPerGasReturnType {
+interface EstimateFeesPerGasReturnType {
   gasPrice: Hex;
   maxFeePerGas: Hex;
   maxPriorityFeePerGas: Hex;
 }
 
-export interface EstimateFeesPerGasParams {
+interface EstimateFeesPerGasParams {
   chainId: number;
   type: SupportedTransactionType;
   gasPrice?: Hex;

@@ -2,7 +2,14 @@ import type { Address, Hex } from 'viem';
 
 import { HeadlessConfig } from '../HeadlessConfig';
 import { SessionRepository } from '../SessionRepository';
-import { HttpClient, UserProfileResponse } from './HttpClient';
+import { HttpClient } from './HttpClient';
+
+export interface UserProfileResponse {
+  uuid: string;
+  address: Address;
+  hasSupportPwdless: boolean;
+  preferMethod: 'recovery_password' | 'passwordless';
+}
 
 export interface SendTransactionRequest {
   tx: {

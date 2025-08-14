@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { Countdown } from '../../../components/countdown/Countdown';
 import { RESEND_EMAIL_PENDING_TIME } from '../../../constants';
 
-export interface ResendEmailProps {
+interface ResendEmailProps {
   pendingTime?: number;
   className?: string;
   label?: string;

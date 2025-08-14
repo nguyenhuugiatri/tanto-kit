@@ -7,16 +7,14 @@ import { Box } from './components/box/Box';
 import { Button, IconButton } from './components/button/Button';
 import { FlexModal } from './components/flex-modal/FlexModal';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
-import { HeadlessOperationType } from './services/HeadlessAsyncTaskManager';
+import { HeadlessOperationType, HeadlessTask } from './services/HeadlessAsyncTaskManager';
 import { headlessInjector } from './services/headlessInjector';
 
-interface Task {
-  type: HeadlessOperationType;
-  id: string;
-  params: any;
-}
-
-const TRACKED_EVENTS = [HeadlessOperationType.SignMessage, HeadlessOperationType.SignTransaction];
+const TRACKED_EVENTS = [
+  HeadlessOperationType.PersonalSign,
+  HeadlessOperationType.SignTypedDataV4,
+  HeadlessOperationType.SignTransaction,
+];
 
 const Title = styled.div({
   alignItems: 'center',
@@ -41,7 +39,7 @@ function CloseButton({ onClick }: { onClick: () => void }) {
 export function ConfirmationModal() {
   const { showConfirmationModal } = useTantoConfig();
   const [isOpen, setIsOpen] = useState(false);
-  const [task, setTask] = useState<Task | null>(null);
+  const [task, setTask] = useState<HeadlessTask | null>(null);
   const headlessAsyncTaskManager = headlessInjector.resolve('headlessAsyncTaskManager');
   const closeModal = () => setIsOpen(false);
 
@@ -75,7 +73,7 @@ export function ConfirmationModal() {
 
     const unsubscribe = headlessAsyncTaskManager.onTaskCreated(({ taskId, operationType, params }) => {
       if (!TRACKED_EVENTS.includes(operationType)) return;
-      setTask({ id: taskId, type: operationType, params });
+      setTask({ id: taskId, operationType, params } as HeadlessTask);
       setIsOpen(true);
     });
 

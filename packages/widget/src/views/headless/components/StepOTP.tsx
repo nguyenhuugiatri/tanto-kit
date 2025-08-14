@@ -5,7 +5,7 @@ import { Box } from '../../../components/box/Box';
 import { OTPInput } from '../../../components/otp-input/OTPInput';
 import { ResendEmail } from './ResendEmail';
 
-export interface StepOTPProps {
+interface StepOTPProps {
   email: string;
   error?: string;
   isLoading?: boolean;

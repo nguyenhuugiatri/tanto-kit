@@ -7,7 +7,7 @@ import type { EmotionCSS } from '../../types/theme';
 import { Box } from '../box/Box';
 import { InputWrapper, StyledCaption, StyledError, StyledInput, StyledLabel } from './Input.styles';
 
-export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
+type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
   label?: string;
   caption?: string;
   error?: string | null;

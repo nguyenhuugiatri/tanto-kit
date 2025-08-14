@@ -2,7 +2,7 @@ import { EventEmitter } from 'eventemitter3';
 
 import { Deferred } from './Defer';
 
-export enum AsyncTaskManagerEvent {
+enum AsyncTaskManagerEvent {
   TaskCreated = 'task:created',
   TaskResolved = 'task:resolved',
   TaskRejected = 'task:rejected',
@@ -30,10 +30,10 @@ interface AsyncTaskEventMap<
   };
 }
 
-export class TaskManagerError extends Error {
+class AsyncTaskManagerError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'TaskManagerError';
+    this.name = 'AsyncTaskManagerError';
   }
 }
 
@@ -52,7 +52,7 @@ export class AsyncTaskManager<
 
   createTask<T extends OperationType>(opts: { operationType: T; id?: string; params?: OperationParamsMap[T] }) {
     const taskId = opts.id ? `${opts.operationType}:${opts.id}` : opts.operationType;
-    if (this.activeTasks.has(taskId)) throw new TaskManagerError(`Task already exists: ${taskId}`);
+    if (this.activeTasks.has(taskId)) throw new AsyncTaskManagerError(`Task already exists: ${taskId}`);
 
     const deferred = new Deferred<OperationResultMap[T]>();
 

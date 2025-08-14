@@ -2,7 +2,6 @@ import type { Address, Hash, Hex, PublicClient, TypedDataDefinition } from 'viem
 import { createPublicClient, hexToString, http, InternalRpcError, UnauthorizedProviderError } from 'viem';
 
 import { WalletApi } from './api/WalletApi';
-import { HeadlessAsyncTaskManager, HeadlessOperationType } from './HeadlessAsyncTaskManager';
 import { HeadlessConfig } from './HeadlessConfig';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
 import { TransactionParams } from './helpers/types';
@@ -10,16 +9,20 @@ import { SessionRepository } from './SessionRepository';
 
 export class WalletService {
   private address: Address | null = null;
-  private publicClient: PublicClient | null = null;
+  private publicClient: PublicClient;
 
-  static inject = ['headlessConfig', 'sessionRepository', 'walletApi', 'headlessAsyncTaskManager'] as const;
+  static inject = ['headlessConfig', 'sessionRepository', 'walletApi'] as const;
 
   constructor(
     private headlessConfig: HeadlessConfig,
     private sessionRepository: SessionRepository,
     private walletApi: WalletApi,
-    private headlessAsyncTaskManager: HeadlessAsyncTaskManager,
-  ) {}
+  ) {
+    this.publicClient = createPublicClient({
+      chain: this.headlessConfig.chain,
+      transport: http(this.headlessConfig.rpcUrl),
+    });
+  }
 
   async getSignableAddress(): Promise<Address> {
     if (this.address) return this.address;
@@ -40,13 +43,12 @@ export class WalletService {
     return this.fetchAndSaveAddress();
   }
 
-  private async fetchAndSaveAddress(): Promise<Address> {
+  async fetchAndSaveAddress(): Promise<Address> {
     try {
       const { address, preferMethod } = await this.walletApi.getUserProfile();
       if (preferMethod !== 'passwordless') {
         throw new UnauthorizedProviderError(new Error('Passwordless authentication is required for this wallet.'));
       }
-      this.headlessAsyncTaskManager.resolveTask(HeadlessOperationType.Connect, { address });
       this.address = address;
       return address;
     } catch (error) {
@@ -118,18 +120,11 @@ export class WalletService {
   }
 
   getPublicClient(): PublicClient {
-    if (!this.publicClient) {
-      this.publicClient = createPublicClient({
-        chain: this.headlessConfig.chain,
-        transport: http(this.headlessConfig.rpcUrl),
-      });
-    }
     return this.publicClient;
   }
 
   async disconnect(): Promise<void> {
-    await this.sessionRepository.clear();
     this.address = null;
-    this.publicClient = null;
+    await this.sessionRepository.clear();
   }
 }

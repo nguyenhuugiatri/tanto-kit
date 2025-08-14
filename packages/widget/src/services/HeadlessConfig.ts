@@ -5,23 +5,23 @@ import { MPC_BASE_URL, MPC_SOCKET_URL, WAYPOINT_BASE_URL } from '../constants';
 
 export class HeadlessConfig {
   private _chain: Chain;
+  private _clientId: string;
   private _waypointBaseUrl: string;
   private _mpcBaseUrl: string;
   private _mpcSocketUrl: string;
-  private _clientId: string;
 
   constructor(config: {
     chain: Chain;
+    clientId: string;
     waypointBaseUrl: string;
     mpcBaseUrl: string;
     mpcSocketUrl: string;
-    clientId: string;
   }) {
     this._chain = config.chain;
+    this._clientId = config.clientId;
     this._waypointBaseUrl = config.waypointBaseUrl;
     this._mpcBaseUrl = config.mpcBaseUrl;
     this._mpcSocketUrl = config.mpcSocketUrl;
-    this._clientId = config.clientId;
   }
 
   get chain() {
