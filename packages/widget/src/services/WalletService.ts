@@ -2,94 +2,110 @@ import type { Address, Hash, Hex, PublicClient, TypedDataDefinition } from 'viem
 import { createPublicClient, hexToString, http, InternalRpcError, UnauthorizedProviderError } from 'viem';
 
 import { WalletApi } from './api/WalletApi';
+import { HeadlessAsyncTaskManager, HeadlessOperationType } from './HeadlessAsyncTaskManager';
 import { HeadlessConfig } from './HeadlessConfig';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
 import { TransactionParams } from './helpers/types';
 import { SessionRepository } from './SessionRepository';
-import { WalletOperationType, WalletTaskManager } from './WalletTaskManager';
 
 export class WalletService {
   private address: Address | null = null;
+  private publicClient: PublicClient | null = null;
 
-  static inject = ['headlessConfig', 'sessionRepository', 'walletApi', 'walletTaskManager'] as const;
+  static inject = ['headlessConfig', 'sessionRepository', 'walletApi', 'headlessAsyncTaskManager'] as const;
 
   constructor(
     private headlessConfig: HeadlessConfig,
     private sessionRepository: SessionRepository,
     private walletApi: WalletApi,
-    private walletTaskManager: WalletTaskManager,
+    private headlessAsyncTaskManager: HeadlessAsyncTaskManager,
   ) {}
 
   async getSignableAddress(): Promise<Address> {
     if (this.address) return this.address;
 
-    const [storedAddress, isAccessTokenExpired] = await Promise.all([
-      this.sessionRepository.getAddress(),
-      this.sessionRepository.isAccessTokenExpired(),
-    ]);
+    const storedAddress = await this.sessionRepository.getAddress();
+    const isExpired = await this.sessionRepository.isAccessTokenExpired();
 
-    if (!isAccessTokenExpired && storedAddress) {
+    // No stored address = no session
+    if (!storedAddress) {
+      throw new UnauthorizedProviderError(new Error('No authenticated session found. Please connect your wallet.'));
+    }
+
+    if (!isExpired) {
       this.address = storedAddress;
       return storedAddress;
     }
 
-    if (!storedAddress) throw new UnauthorizedProviderError(new Error('No stored address found'));
-
-    const { address, preferMethod } = await this.walletApi.getUserProfile();
-    if (preferMethod !== 'passwordless')
-      throw new UnauthorizedProviderError(new Error('User passwordless auth is not supported'));
-
-    this.walletTaskManager.resolveTask(WalletOperationType.Connect, { address });
-    this.address = address;
-    return address;
+    return this.fetchAndSaveAddress();
   }
 
-  async ensureSignable(): Promise<void> {
-    await this.getSignableAddress();
+  private async fetchAndSaveAddress(): Promise<Address> {
+    try {
+      const { address, preferMethod } = await this.walletApi.getUserProfile();
+      if (preferMethod !== 'passwordless') {
+        throw new UnauthorizedProviderError(new Error('Passwordless authentication is required for this wallet.'));
+      }
+      this.headlessAsyncTaskManager.resolveTask(HeadlessOperationType.Connect, { address });
+      this.address = address;
+      return address;
+    } catch (error) {
+      throw new UnauthorizedProviderError(
+        new Error('Failed to fetch user profile. Please reconnect your wallet.', { cause: error }),
+      );
+    }
+  }
+
+  private async withSignable<T>(fn: (address: Address) => Promise<T>): Promise<T> {
+    const address = await this.getSignableAddress();
+    return fn(address);
   }
 
   personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
     try {
-      await this.ensureSignable();
-      const [data] = params;
-      const messageToSign = hexToString(data);
-      const messageBase64 = btoa(messageToSign);
-      const { signature } = await this.walletApi.signMessage({ messageBase64 });
-      return signature;
+      return await this.withSignable(async () => {
+        const [data] = params;
+        const messageToSign = hexToString(data);
+        const messageBase64 = btoa(messageToSign);
+        const { signature } = await this.walletApi.signMessage({ messageBase64 });
+        return signature;
+      });
     } catch (error) {
-      throw new InternalRpcError(error instanceof Error ? error : new Error('Unable to personal sign'));
+      throw new InternalRpcError(new Error('Unable to personal sign', { cause: error }));
     }
   };
 
   signTypedDataV4 = async (params: [address: Address, data: TypedDataDefinition | string]): Promise<Hex> => {
     try {
-      await this.ensureSignable();
-      const data = params[1];
-      const messageToSign = typeof data === 'string' ? data : JSON.stringify(data);
-      const messageBase64 = btoa(messageToSign);
-      const { signature } = await this.walletApi.signMessage({ messageBase64 });
-      return signature;
+      return await this.withSignable(async () => {
+        const data = params[1];
+        const messageToSign = typeof data === 'string' ? data : JSON.stringify(data);
+        const messageBase64 = btoa(messageToSign);
+        const { signature } = await this.walletApi.signMessage({ messageBase64 });
+        return signature;
+      });
     } catch (error) {
-      throw new InternalRpcError(error instanceof Error ? error : new Error('Unable to sign typed data'));
+      throw new InternalRpcError(new Error('Unable to sign typed data', { cause: error }));
     }
   };
 
   sendTransaction = async (params: [transaction: TransactionParams]): Promise<Hash> => {
     try {
-      const [transaction] = params;
-      const address = await this.getSignableAddress();
-      const transactionData = await toTransactionInServerFormat({
-        chain: { chainId: this.headlessConfig.chain.id, rpcUrl: this.headlessConfig.rpcUrl },
-        transaction,
-        currentAddress: address,
+      return await this.withSignable(async address => {
+        const [transaction] = params;
+        const transactionData = await toTransactionInServerFormat({
+          chain: { chainId: this.headlessConfig.chain.id, rpcUrl: this.headlessConfig.rpcUrl },
+          transaction,
+          currentAddress: address,
+        });
+        const { txHash } = await this.walletApi.sendTransaction({
+          tx: transactionData,
+          rpcUrl: this.headlessConfig.rpcUrl,
+        });
+        return txHash;
       });
-      const { txHash } = await this.walletApi.sendTransaction({
-        tx: transactionData,
-        rpcUrl: this.headlessConfig.rpcUrl,
-      });
-      return txHash;
     } catch (error) {
-      throw new InternalRpcError(error instanceof Error ? error : new Error('Unable to send transaction'));
+      throw new InternalRpcError(new Error('Unable to send transaction', { cause: error }));
     }
   };
 
@@ -102,14 +118,18 @@ export class WalletService {
   }
 
   getPublicClient(): PublicClient {
-    return createPublicClient({
-      chain: this.headlessConfig.chain,
-      transport: http(this.headlessConfig.rpcUrl),
-    });
+    if (!this.publicClient) {
+      this.publicClient = createPublicClient({
+        chain: this.headlessConfig.chain,
+        transport: http(this.headlessConfig.rpcUrl),
+      });
+    }
+    return this.publicClient;
   }
 
-  disconnect(): void {
+  async disconnect(): Promise<void> {
+    await this.sessionRepository.clear();
     this.address = null;
-    this.sessionRepository.clear();
+    this.publicClient = null;
   }
 }

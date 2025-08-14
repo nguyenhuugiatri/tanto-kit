@@ -82,7 +82,7 @@ export function useWallets() {
     const walletMap = new Map(wallets.map(wallet => [wallet.id, wallet]));
     const safeWallet = isSafe ? walletMap.get(WALLET_IDS.SAFE) : null;
     const waypointWallet = walletMap.get(WALLET_IDS.WAYPOINT);
-    const roninHeadlessWallet = walletMap.get(WALLET_IDS.RONIN_WALLET_HEADLESS);
+    const headlessWallet = walletMap.get(WALLET_IDS.RONIN_WALLET_HEADLESS);
     const coinbaseWallet = walletMap.get(WALLET_IDS.COINBASE_WALLET);
     const wcWallet = walletMap.get(WALLET_IDS.WALLET_CONNECT);
     const roninExtensionWallet =
@@ -109,7 +109,7 @@ export function useWallets() {
 
     return {
       waypointWallet,
-      pwdlessWallet: roninHeadlessWallet,
+      headlessWallet,
       roninExtensionWallet,
       roninMobileWallet,
       roninInAppBrowserWallet,
@@ -121,11 +121,11 @@ export function useWallets() {
   }, [wallets, isSafe]);
 
   const primaryWallets = useMemo(() => {
-    const { pwdlessWallet, waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } =
+    const { headlessWallet, waypointWallet, roninExtensionWallet, roninMobileWallet, roninInAppBrowserWallet } =
       walletsByType;
-    if (deviceInfo.isDesktop) return [pwdlessWallet ?? waypointWallet, roninExtensionWallet].filter(notEmpty);
+    if (deviceInfo.isDesktop) return [headlessWallet ?? waypointWallet, roninExtensionWallet].filter(notEmpty);
     if (deviceInfo.isMobile && !deviceInfo.isRoninInAppBrowser)
-      return [pwdlessWallet ?? waypointWallet, roninMobileWallet].filter(notEmpty);
+      return [headlessWallet ?? waypointWallet, roninMobileWallet].filter(notEmpty);
     if (deviceInfo.isRoninInAppBrowser) return [roninInAppBrowserWallet].filter(notEmpty);
     return [];
   }, [walletsByType, deviceInfo]);
@@ -146,7 +146,7 @@ export function useWallets() {
       primaryWallets,
       secondaryWallets,
       waypointWallet: walletsByType.waypointWallet,
-      pwdlessWallet: walletsByType.pwdlessWallet,
+      headlessWallet: walletsByType.headlessWallet,
     }),
     [primaryWallets, secondaryWallets, walletsByType],
   );

@@ -3,11 +3,11 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Address, EIP1193Parameters, Hash, Hex, PublicRpcSchema, TypedDataDefinition } from 'viem';
 import { toHex } from 'viem';
 
+import { HeadlessAsyncTaskManager, HeadlessOperationType } from './HeadlessAsyncTaskManager';
 import type { TransactionParams } from './helpers/types';
 import { WalletService } from './WalletService';
-import { WalletOperationType, WalletTaskManager } from './WalletTaskManager';
 
-export type PwdlessRequestSchema = [
+export type HeadlessRequestSchema = [
   ...PublicRpcSchema,
   {
     Method: 'eth_accounts';
@@ -37,9 +37,9 @@ export type PwdlessRequestSchema = [
 ];
 
 export class HeadlessProvider extends EventEmitter {
-  static inject = ['walletService', 'walletTaskManager'] as const;
+  static inject = ['walletService', 'headlessAsyncTaskManager'] as const;
 
-  constructor(private walletService: WalletService, private walletTaskManager: WalletTaskManager) {
+  constructor(private walletService: WalletService, private headlessAsyncTaskManager: HeadlessAsyncTaskManager) {
     super();
   }
 
@@ -54,13 +54,13 @@ export class HeadlessProvider extends EventEmitter {
 
   async connect(): Promise<{ address: Address }> {
     const signableAddress = await this.walletService.getSignableAddress();
-    if (signableAddress)
-      return {
-        address: signableAddress,
-      };
+    if (signableAddress) {
+      return { address: signableAddress };
+    }
 
-    const { promise } = this.walletTaskManager.createTask({
-      operationType: WalletOperationType.Connect,
+    // Wait for fetch profile and save address
+    const { promise } = this.headlessAsyncTaskManager.createTask({
+      operationType: HeadlessOperationType.Connect,
     });
 
     const { address } = await promise;
@@ -97,41 +97,49 @@ export class HeadlessProvider extends EventEmitter {
     return this.walletService.sendTransaction(params);
   }
 
-  private async waitForUserConfirm<T>(
-    operationType: WalletOperationType,
+  private async waitForUserConfirmation<T>(
+    operationType: HeadlessOperationType,
     params: any,
     executor: () => Promise<T>,
   ): Promise<T> {
-    const { promise: confirmPromise } = this.walletTaskManager.createTask({
+    const { promise: confirmPromise } = this.headlessAsyncTaskManager.createTask({
       operationType,
       id: uuidv4(),
       params,
     });
+
     await confirmPromise;
     return executor();
   }
 
-  async request<ReturnType = unknown>(args: EIP1193Parameters<PwdlessRequestSchema>): Promise<ReturnType> {
+  async request<ReturnType = unknown>(args: EIP1193Parameters<HeadlessRequestSchema>): Promise<ReturnType> {
     const { method, params } = args;
+
     switch (method) {
       case 'eth_accounts':
         return this.getAccounts() as ReturnType;
+
       case 'eth_requestAccounts':
         return (await this.requestAccounts()) as ReturnType;
+
       case 'eth_chainId':
         return toHex(this.getChainId()) as ReturnType;
+
       case 'personal_sign':
-        return this.waitForUserConfirm(WalletOperationType.SignMessage, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.SignMessage, params, () =>
           this.personalSign(params),
         ) as ReturnType;
+
       case 'eth_signTypedData_v4':
-        return this.waitForUserConfirm(WalletOperationType.SignMessage, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.SignMessage, params, () =>
           this.signTypedDataV4(params),
         ) as ReturnType;
+
       case 'eth_sendTransaction':
-        return this.waitForUserConfirm(WalletOperationType.SignTransaction, params, () =>
+        return this.waitForUserConfirmation(HeadlessOperationType.SignTransaction, params, () =>
           this.sendTransaction(params),
         ) as ReturnType;
+
       default:
         return this.walletService.getPublicClient().request(args) as ReturnType;
     }

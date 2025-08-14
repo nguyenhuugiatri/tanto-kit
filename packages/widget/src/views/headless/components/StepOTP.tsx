@@ -61,8 +61,8 @@ export function StepOTP({
   };
 
   useEffect(() => {
-    if (otp === '') ref.current?.focus();
-  }, [otp]);
+    if (otp === '' || !!error) ref.current?.focus();
+  }, [otp, error]);
 
   return (
     <Box fullWidth vertical align="center" gap={48}>

@@ -18,7 +18,7 @@ export function useWalletState(wallet: Wallet) {
 
   return useMemo(() => {
     const isWaypointWallet = isWaypointConnector(connector?.id);
-    const isPwdlessWallet = isRoninWalletHeadlessConnector(connector?.id);
+    const isHeadlessWallet = isRoninWalletHeadlessConnector(connector?.id);
     const isWCWallet = isWCConnector(connector?.id);
     const isInjected = isInjectedConnector(connector?.type);
     const isMarkedConnected = (isWaypointWallet && markKeylessWalletConnected) || (isWCWallet && markWCConnected);
@@ -28,7 +28,7 @@ export function useWalletState(wallet: Wallet) {
       isMarkedConnected,
       isInjected,
       isWCWallet,
-      isPwdlessWallet,
+      isHeadlessWallet,
       isWaypointWallet,
       highlightContent: highlightBackground ? (isMobile ? 'Fastest' : 'Fastest to start') : undefined,
     };

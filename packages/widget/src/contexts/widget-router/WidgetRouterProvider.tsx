@@ -57,6 +57,29 @@ export function WidgetRouterProvider({ children }: PropsWithChildren) {
     [isConnected],
   );
 
+  const replace = useCallback(
+    (nextRoute: Route, opts?: Partial<Omit<View, 'route'>>) => {
+      setRouterState(prevState => {
+        const viewConfig = viewConfigs[nextRoute];
+        const hasPreviousViews = prevState.history.length > 0;
+
+        const newView: View = {
+          route: nextRoute,
+          title: opts?.title ?? viewConfig.title,
+          showBackButton: opts?.showBackButton ?? viewConfig.showBackButton ?? hasPreviousViews,
+          content: opts?.content ?? viewConfig.content,
+          ...opts,
+        };
+
+        return {
+          view: newView,
+          history: [...prevState.history.slice(0, -1), newView],
+        };
+      });
+    },
+    [isConnected],
+  );
+
   const goBack = useCallback(() => {
     setRouterState(prevState => {
       if (prevState.history.length <= 1) return prevState;
@@ -91,10 +114,11 @@ export function WidgetRouterProvider({ children }: PropsWithChildren) {
       view: routerState.view,
       history: routerState.history,
       goTo,
+      replace,
       goBack,
       reset,
     }),
-    [routerState.view, routerState.history, goTo, goBack, reset],
+    [routerState.view, routerState.history, goTo, replace, goBack, reset],
   );
 
   return <WidgetRouterContext.Provider value={contextValue}>{children}</WidgetRouterContext.Provider>;

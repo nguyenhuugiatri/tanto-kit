@@ -7,16 +7,16 @@ import { Box } from './components/box/Box';
 import { Button, IconButton } from './components/button/Button';
 import { FlexModal } from './components/flex-modal/FlexModal';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
+import { HeadlessOperationType } from './services/HeadlessAsyncTaskManager';
 import { headlessInjector } from './services/headlessInjector';
-import { WalletOperationType } from './services/WalletTaskManager';
 
 interface Task {
-  type: WalletOperationType;
+  type: HeadlessOperationType;
   id: string;
   params: any;
 }
 
-const TRACKED_EVENTS = [WalletOperationType.SignMessage, WalletOperationType.SignTransaction];
+const TRACKED_EVENTS = [HeadlessOperationType.SignMessage, HeadlessOperationType.SignTransaction];
 
 const Title = styled.div({
   alignItems: 'center',
@@ -42,38 +42,38 @@ export function ConfirmationModal() {
   const { showConfirmationModal } = useTantoConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
-  const walletTaskManager = headlessInjector.resolve('walletTaskManager');
+  const headlessAsyncTaskManager = headlessInjector.resolve('headlessAsyncTaskManager');
   const closeModal = () => setIsOpen(false);
 
   const handleRemoveTaskOnClose = () => {
     if (!task) return;
-    walletTaskManager.cancelTask(task.id);
+    headlessAsyncTaskManager.cancelTask(task.id);
     closeModal();
   };
 
   const handleCancel = () => {
     if (!task) return;
-    walletTaskManager.rejectTask(task.id, new UserRejectedRequestError(new Error('User rejected request')));
+    headlessAsyncTaskManager.rejectTask(task.id, new UserRejectedRequestError(new Error('User rejected request')));
     closeModal();
   };
 
   const handleConfirm = () => {
     if (!task) return;
-    walletTaskManager.resolveTask(task.id);
+    headlessAsyncTaskManager.resolveTask(task.id);
     closeModal();
   };
 
   useEffect(() => {
     if (!showConfirmationModal) {
-      const unsubscribe = walletTaskManager.onTaskCreated(({ taskId }) => {
-        walletTaskManager.resolveTask(taskId);
+      const unsubscribe = headlessAsyncTaskManager.onTaskCreated(({ taskId }) => {
+        headlessAsyncTaskManager.resolveTask(taskId);
       });
       return () => {
         unsubscribe();
       };
     }
 
-    const unsubscribe = walletTaskManager.onTaskCreated(({ taskId, operationType, params }) => {
+    const unsubscribe = headlessAsyncTaskManager.onTaskCreated(({ taskId, operationType, params }) => {
       if (!TRACKED_EVENTS.includes(operationType)) return;
       setTask({ id: taskId, type: operationType, params });
       setIsOpen(true);

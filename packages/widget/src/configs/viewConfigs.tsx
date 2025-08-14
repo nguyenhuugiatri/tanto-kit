@@ -2,7 +2,7 @@ import type { View } from '../contexts/widget-router/WidgetRouterContext';
 import { Route } from '../types/route';
 import { ConnectInjector } from '../views/connect/ConnectInjector';
 import { ConnectWC } from '../views/connect/ConnectWC';
-import { Keyless } from '../views/keyless/Keyless';
+import { Headless } from '../views/headless/Headless';
 import { Profile } from '../views/profile/Profile';
 import { WalletList } from '../views/wallet-list/WalletList';
 
@@ -41,9 +41,9 @@ export const viewConfigs: Record<Route, View> = {
     title: WalletTitle,
     showBackButton: false,
   },
-  [Route.KEYLESS]: {
-    route: Route.KEYLESS,
-    content: <Keyless />,
+  [Route.HEADLESS]: {
+    route: Route.HEADLESS,
+    content: <Headless />,
     showBackButton: false,
   },
   [Route.CONNECT_INJECTOR]: {

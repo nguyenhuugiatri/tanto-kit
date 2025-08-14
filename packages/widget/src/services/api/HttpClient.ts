@@ -8,6 +8,12 @@ import { SessionRepository } from '../SessionRepository';
 
 export const HTTP_STATUS_UNAUTHORIZED = 401;
 
+export class HttpError extends Error {
+  constructor(public code: number, public message: string) {
+    super(message);
+  }
+}
+
 declare module 'ofetch' {
   interface FetchOptions {
     shouldRefreshToken?: boolean;
@@ -38,6 +44,7 @@ export class HttpClient {
     this.$fetch = ofetch.create({
       onRequest: this.onRequest.bind(this),
       onResponse: this.onResponse.bind(this),
+      onResponseError: this.onResponseError.bind(this),
     });
   }
 
@@ -109,6 +116,17 @@ export class HttpClient {
     } catch {}
   }
 
+  private async onResponseError(context: FetchContext) {
+    const { response } = context;
+    const ok = response?.ok;
+
+    if (!ok)
+      throw new HttpError(
+        response?._data?.code ?? response?._data?.errorCode,
+        response?._data?.message ?? response?._data?.errorMessage,
+      );
+  }
+
   private async refreshTokens() {
     if (this.refreshTokensPromise) return this.refreshTokensPromise;
 
@@ -138,8 +156,8 @@ export class HttpClient {
 
       return tokens;
     } catch (error) {
-      await this.sessionRepository.clear();
-      throw error;
+      this.sessionRepository.clear();
+      throw new Error('Session expired. Please login again.', { cause: error });
     } finally {
       this.refreshTokensPromise = null;
     }

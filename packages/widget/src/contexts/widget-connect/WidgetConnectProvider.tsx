@@ -7,7 +7,7 @@ import type { WidgetConnectState } from './WidgetConnectContext';
 import { WidgetConnectContext } from './WidgetConnectContext';
 
 export function WidgetConnectProvider({ children }: PropsWithChildren) {
-  const { wallets, primaryWallets, secondaryWallets, waypointWallet, pwdlessWallet } = useWallets();
+  const { wallets, primaryWallets, secondaryWallets, waypointWallet, headlessWallet } = useWallets();
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const selectedConnector = useMemo(() => selectedWallet?.connector, [selectedWallet?.connector]);
   const contextValue = useMemo<WidgetConnectState>(
@@ -18,10 +18,10 @@ export function WidgetConnectProvider({ children }: PropsWithChildren) {
       selectedConnector,
       selectedWallet,
       waypointWallet,
-      pwdlessWallet,
+      headlessWallet,
       setSelectedWallet,
     }),
-    [primaryWallets, secondaryWallets, selectedConnector, selectedWallet, waypointWallet, pwdlessWallet],
+    [primaryWallets, secondaryWallets, selectedConnector, selectedWallet, waypointWallet, headlessWallet],
   );
 
   return <WidgetConnectContext.Provider value={contextValue}>{children}</WidgetConnectContext.Provider>;

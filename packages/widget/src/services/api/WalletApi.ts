@@ -35,7 +35,7 @@ export class WalletApi {
       method: 'POST',
       path: '/get-user-profile',
     });
-    await this.sessionRepository.setAddress(profile.address);
+    if (profile.preferMethod === 'passwordless') await this.sessionRepository.setAddress(profile.address);
     return profile;
   };
 
