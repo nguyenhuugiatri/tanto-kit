@@ -60,6 +60,11 @@ export function StepOTP({
     onOTPChange(code);
   };
 
+  const handleResend = () => {
+    setOTP('');
+    onResend();
+  };
+
   useEffect(() => {
     if (otp === '' || !!error) ref.current?.focus();
   }, [otp, error]);
@@ -82,7 +87,7 @@ export function StepOTP({
         isSuccess={isSuccess}
         error={error}
       />
-      <ResendEmail onResend={onResend} />
+      <ResendEmail onResend={handleResend} />
     </Box>
   );
 }

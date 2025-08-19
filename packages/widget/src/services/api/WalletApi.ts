@@ -75,7 +75,8 @@ export class WalletApi {
       baseUrl: this.headlessConfig.mpcBaseUrl,
       method: 'POST',
       path: '/send',
-      data: { tx, rpcUrl },
+      shouldTransformRequest: false,
+      data: { tx, rpc_url: rpcUrl },
     });
   };
 }

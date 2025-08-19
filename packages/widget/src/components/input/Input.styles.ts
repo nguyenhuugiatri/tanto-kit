@@ -12,10 +12,10 @@ export const InputWrapper = styled(Box)(
     const { theme } = props;
     return {
       borderRadius: theme.inputBorderRadius,
-      backgroundColor: theme.inputBackgroundColor,
-      border: `1px solid ${theme.inputBorderColor}`,
+      backgroundColor: theme.inputBackground,
+      border: `1px solid ${theme.inputBorder}`,
       '&:focus-within': {
-        borderColor: theme.inputFocusBorderColor,
+        borderColor: theme.inputFocusBorder,
       },
     };
   },

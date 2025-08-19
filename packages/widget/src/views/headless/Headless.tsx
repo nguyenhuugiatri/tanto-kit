@@ -1,13 +1,15 @@
 import { useCallbackRef } from '@radix-ui/react-use-callback-ref';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { TransitionedView } from '../../components/animated-containers/TransitionedView';
 import { Box, BoxProps } from '../../components/box/Box';
 import { useWidgetConnect } from '../../contexts/widget-connect/useWidgetConnect';
 import { useWidgetRouter } from '../../contexts/widget-router/useWidgetRouter';
+import { useIsModal } from '../../contexts/widget-ui-config/useIsModal';
 import { authEventEmitter } from '../../hooks/useAuthEffect';
 import { useConnectAndAuth } from '../../hooks/useConnectAndAuth';
+import { useUnmount } from '../../hooks/useUnmount';
 import { ErrorCode } from '../../services/api/errorCode';
 import { HttpError } from '../../services/api/HttpClient';
 import { headlessInjector } from '../../services/headlessInjector';
@@ -20,31 +22,37 @@ import { StepCreatingKeyless } from './components/StepCreatingKeyless';
 import { StepOTP } from './components/StepOTP';
 import { StepSelectProvider } from './components/StepSelectProvider';
 import { StepSuccess } from './components/StepSuccess';
+import { StepSuccessNewUser } from './components/StepSuccessNewUser';
 
-enum Step {
+const enum Step {
   SELECT_METHOD = 1,
   OTP = 2,
   CREATE_NEW_KEYLESS_WALLET = 3,
   SUCCESS = 4,
+  RECEIVE_NEWS = 5,
 }
 
 interface EmailFormData {
   email: string;
 }
 
-function getOTPError(error: { code?: number; message: string }): string {
-  switch (error.code) {
-    case 400046:
-      return 'Invalid code. Please try again.';
-    default:
-      return error.message || 'Failed to verify OTP.';
-  }
-}
+const OTP_ERRORS = {
+  400046: 'Invalid code. Please try again.',
+} as const;
+
+const getOTPError = (error: { code?: number; message: string }): string =>
+  OTP_ERRORS[error.code as keyof typeof OTP_ERRORS] || error.message || 'Failed to verify OTP.';
+
+const STEPS_WITHOUT_BACK = new Set([Step.SUCCESS, Step.RECEIVE_NEWS, Step.CREATE_NEW_KEYLESS_WALLET]);
 
 export function Headless(props: BoxProps) {
   const [step, setStep] = useState(Step.SELECT_METHOD);
   const [email, setEmail] = useState('');
   const [waitSeconds, setWaitSeconds] = useState(0);
+  const [agreeReceiveNews, setAgreeReceiveNews] = useState(false);
+
+  const isModal = useIsModal();
+  const isNewUser = useRef(false);
 
   const { goBack: goBackRouter, replace: replaceRouter } = useWidgetRouter();
   const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
@@ -65,13 +73,16 @@ export function Headless(props: BoxProps) {
   const createKeylessWalletMutation = useMutation(mutation.createKeylessWallet());
   const getUserProfileMutation = useMutation(mutation.getUserProfile());
 
-  const otpError = authenticateOTPMutation.error ? getOTPError(authenticateOTPMutation.error) : undefined;
+  const otpError = useMemo(
+    () => (authenticateOTPMutation.error ? getOTPError(authenticateOTPMutation.error) : undefined),
+    [authenticateOTPMutation.error],
+  );
 
   const handleBack = useCallbackRef(() => {
     if (step === Step.SELECT_METHOD) {
       goBackRouter();
     } else {
-      setStep(step - 1);
+      setStep(prev => prev - 1);
     }
   });
 
@@ -91,10 +102,8 @@ export function Headless(props: BoxProps) {
 
   const handleSubmitOTP = useCallbackRef(async (code: string) => {
     try {
-      await authenticateOTPMutation.mutateAsync({
-        email,
-        otp: code,
-      });
+      const { user } = await authenticateOTPMutation.mutateAsync({ email, otp: code });
+      isNewUser.current = user.isNew;
 
       const { preferMethod } = await getUserProfileMutation.mutateAsync();
 
@@ -105,11 +114,11 @@ export function Headless(props: BoxProps) {
         }
         return;
       }
+
       connect();
     } catch (error) {
       if (error instanceof HttpError && error.code === ErrorCode.MPC_NOT_FOUND) {
         setStep(Step.CREATE_NEW_KEYLESS_WALLET);
-        return;
       }
     }
   });
@@ -117,9 +126,9 @@ export function Headless(props: BoxProps) {
   const handleCreateKeylessWallet = useCallbackRef(async () => {
     try {
       await createKeylessWalletMutation.mutateAsync();
-      // Make sure the address is set in the session
+      // Ensure the address is set in the session
       await getUserProfileMutation.mutateAsync();
-      connect();
+      setStep(Step.RECEIVE_NEWS);
     } catch (error) {
       console.debug('Failed to create keyless wallet:', error);
     }
@@ -129,32 +138,52 @@ export function Headless(props: BoxProps) {
     otpPasswordlessMutation.mutate({ email });
   });
 
+  const handleConnect = useCallbackRef(() => {
+    connect();
+  });
+
   useEffect(() => {
     otpPasswordlessMutation.reset();
     authenticateOTPMutation.reset();
+    isNewUser.current = false;
     setWaitSeconds(0);
   }, [email]);
 
   useEffect(() => {
-    if (connectStatus === ConnectState.SUCCESS) {
+    if (connectStatus !== ConnectState.SUCCESS) return;
+
+    const emitAuthSuccess = async () => {
       const headlessConfig = headlessInjector.resolve('headlessConfig');
       const sessionRepository = headlessInjector.resolve('sessionRepository');
-      Promise.all([sessionRepository.getAccessToken(), sessionRepository.getAddress()]).then(([token, address]) => {
-        if (token && address) {
-          authEventEmitter.emit('success', {
-            chainId: headlessConfig.chain.id,
-            address,
-            token,
-          });
-        }
-      });
-      setStep(Step.SUCCESS);
-    }
+
+      const [token, address] = await Promise.all([sessionRepository.getAccessToken(), sessionRepository.getAddress()]);
+
+      if (token && address) {
+        authEventEmitter.emit('success', {
+          chainId: headlessConfig.chain.id,
+          address,
+          token,
+        });
+      }
+    };
+
+    emitAuthSuccess();
+
+    if (!isNewUser.current) setStep(Step.SUCCESS);
   }, [connectStatus]);
 
-  const showBackButton = ![Step.SUCCESS, Step.CREATE_NEW_KEYLESS_WALLET].includes(step);
+  useUnmount(() => {
+    if (isModal && step === Step.RECEIVE_NEWS && connectStatus !== ConnectState.SUCCESS) connect();
+    if (agreeReceiveNews) {
+      // TODO: Send agreeReceiveNews to backend
+      console.debug('agreeReceiveNews', agreeReceiveNews);
+    }
+  });
+
+  const showBackButton = !STEPS_WITHOUT_BACK.has(step);
   const showLogo = step === Step.SELECT_METHOD;
   const title = step === Step.SELECT_METHOD ? 'Sign in with Email & OTP' : null;
+  const isOTPLoading = authenticateOTPMutation.isPending || getUserProfileMutation.isPending;
 
   return (
     <Box fullWidth vertical {...props}>
@@ -183,7 +212,7 @@ export function Headless(props: BoxProps) {
             onOTPChange={handleOTPChange}
             onOTPSubmit={handleSubmitOTP}
             onResend={handleResend}
-            isLoading={authenticateOTPMutation.isPending || getUserProfileMutation.isPending}
+            isLoading={isOTPLoading}
             error={otpError}
             isSuccess={authenticateOTPMutation.isSuccess}
           />
@@ -194,6 +223,10 @@ export function Headless(props: BoxProps) {
         )}
 
         {step === Step.SUCCESS && <StepSuccess />}
+
+        {step === Step.RECEIVE_NEWS && (
+          <StepSuccessNewUser checked={agreeReceiveNews} setChecked={setAgreeReceiveNews} connect={handleConnect} />
+        )}
       </TransitionedView>
     </Box>
   );

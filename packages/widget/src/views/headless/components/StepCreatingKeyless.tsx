@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Hourglass } from '../../../assets/Hourglass';
 import { Box } from '../../../components/box/Box';
@@ -29,7 +29,12 @@ const Description = styled.p(({ theme }) => ({
 }));
 
 export function StepCreatingKeyless({ handleCreateKeylessWallet }: StepCreatingKeylessProps) {
+  const calledRef = useRef(false);
+
   useEffect(() => {
+    if (calledRef.current) return;
+    calledRef.current = true;
+
     handleCreateKeylessWallet();
   }, []);
 

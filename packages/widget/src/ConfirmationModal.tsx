@@ -5,6 +5,7 @@ import { hexToString, isHex, UserRejectedRequestError } from 'viem';
 import { XIcon } from './assets/XIcon';
 import { Box } from './components/box/Box';
 import { Button, IconButton } from './components/button/Button';
+import { CSSReset } from './components/css-reset/CSSReset';
 import { FlexModal } from './components/flex-modal/FlexModal';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
 import { HeadlessOperationType, HeadlessTask } from './services/HeadlessAsyncTaskManager';
@@ -12,15 +13,28 @@ import { headlessInjector } from './services/headlessInjector';
 
 const Title = styled.div({
   alignItems: 'center',
-  fontSize: '1.5em',
-  fontWeight: 600,
+  fontSize: '1.25em',
+  fontWeight: 500,
   marginTop: 8,
 });
 
-const ParamsContainer = styled.pre({
-  fontSize: '0.85em',
-  textIndent: 8,
+const Description = styled.div(({ theme }) => ({
+  color: theme.mutedText,
+}));
+
+const ParamsKey = styled.strong({
+  fontWeight: 500,
 });
+
+const ParamsContainer = styled.pre(({ theme }) => ({
+  color: theme.mutedText,
+  marginLeft: 8,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  tabSize: 2,
+  overflow: 'auto',
+  maxHeight: 240,
+}));
 
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
@@ -39,8 +53,8 @@ function getModalContent(task: HeadlessTask) {
   if (task.operationType === HeadlessOperationType.PersonalSign) {
     const [data] = task.params;
     return {
-      title: 'Sign Message Request',
-      description: 'You are about to sign a message with your wallet.',
+      title: 'Sign Message',
+      description: 'You are requested to sign a message. It will not cost you any fees.',
       details: {
         Message: isHex(data) ? hexToString(data) : data,
       },
@@ -50,8 +64,8 @@ function getModalContent(task: HeadlessTask) {
   if (task.operationType === HeadlessOperationType.SignTypedDataV4) {
     const typedData = task.params[1];
     return {
-      title: 'Sign Typed Data Request',
-      description: 'You are about to sign structured data with your wallet.',
+      title: 'Sign Message',
+      description: 'You are requested to sign a message. It will not cost you any fees.',
       details: {
         'Typed Data':
           typeof typedData === 'string'
@@ -66,8 +80,8 @@ function getModalContent(task: HeadlessTask) {
   if (task.operationType === HeadlessOperationType.SendTransaction) {
     const [transaction] = task.params;
     return {
-      title: 'Transaction Request',
-      description: 'You are about to send a transaction.',
+      title: 'Send Transaction',
+      description: 'You are requested to send following transaction.',
       details: {
         To: transaction.to || 'Contract Creation',
         Value: transaction.value ? `${parseInt(transaction.value, 16)} wei` : '0 wei',
@@ -134,28 +148,30 @@ export function ConfirmationModal() {
 
   return (
     <FlexModal open={isOpen} onOpenChange={setIsOpen} onAfterClose={handleRemoveTaskOnClose}>
-      <Box vertical gap={16}>
-        <Box vertical gap={8}>
-          <Title>{modalContent.title}</Title>
-          <p>{modalContent.description}</p>
-          <Box vertical gap={8}>
+      <CSSReset>
+        <Box vertical maxWidth={400} gap={24}>
+          <Box vertical gap={12}>
+            <Title>{modalContent.title}</Title>
+            <Description>{modalContent.description}</Description>
+          </Box>
+          <Box vertical gap={12}>
             {Object.entries(modalContent.details).map(([key, value]) => (
               <Box key={key} vertical gap={4}>
-                <strong>{key}:</strong>
-                <ParamsContainer>{value}</ParamsContainer>
+                <ParamsKey>{key}:</ParamsKey>
+                <ParamsContainer data-scrollable>{value}</ParamsContainer>
               </Box>
             ))}
           </Box>
+          <Box fullWidth gap={8}>
+            <Button fullWidth intent="secondary" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button fullWidth onClick={handleConfirm}>
+              Confirm
+            </Button>
+          </Box>
         </Box>
-        <Box fullWidth gap={8}>
-          <Button fullWidth intent="secondary" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button fullWidth onClick={handleConfirm}>
-            Confirm
-          </Button>
-        </Box>
-      </Box>
+      </CSSReset>
       <CloseButton onClick={closeModal} />
     </FlexModal>
   );

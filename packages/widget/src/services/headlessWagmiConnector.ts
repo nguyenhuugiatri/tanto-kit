@@ -9,8 +9,7 @@ interface headlessConnectorOptions {
 }
 
 export function headlessConnector(options: headlessConnectorOptions) {
-  // TODO: handle chain
-  const chain = options.chainId === 2021 ? saigon : ronin;
+  const chain = options.chainId === saigon.id ? saigon : ronin;
   headlessInjector.resolve('headlessConfig').chain = chain;
   const provider = headlessInjector.resolve('headlessProvider');
 

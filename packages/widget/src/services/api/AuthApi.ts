@@ -17,6 +17,18 @@ export interface CreateAccountResponse {
   userID: string;
 }
 
+export interface AuthenticateWithOtpResponse {
+  user: {
+    userID: string;
+    email: string;
+    isNew: boolean;
+  };
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
 export class AuthApi {
   static inject = ['headlessConfig', 'httpClient', 'sessionRepository'] as const;
 
@@ -65,8 +77,8 @@ export class AuthApi {
   }: {
     email: string;
     otp: string;
-  }): Promise<{ accessToken: string; refreshToken: string }> => {
-    const authData = await this.httpClient.call<{ accessToken: string; refreshToken: string }>({
+  }): Promise<AuthenticateWithOtpResponse> => {
+    const authData = await this.httpClient.call<AuthenticateWithOtpResponse>({
       method: 'POST',
       path: '/passwordless/authenticate',
       headers: { 'sm-client-id': this.headlessConfig.clientId },

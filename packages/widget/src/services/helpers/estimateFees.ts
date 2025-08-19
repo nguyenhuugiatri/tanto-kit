@@ -1,15 +1,8 @@
-import { ofetch } from 'ofetch';
 import { Client, Hex, numberToHex } from 'viem';
-import { getGasPrice } from 'viem/actions';
-import { ronin, saigon } from 'viem/chains';
+import { estimateFeesPerGas as viemEstimateFeesPerGas, getGasPrice } from 'viem/actions';
 
 import { isEIP1559CompatibleTransaction } from './transactionTypeUtils';
 import { SupportedTransactionType } from './types';
-
-const GAS_SUGGESTION_BASE_URL: Record<number, string> = {
-  [ronin.id]: 'https://wallet-manager.skymavis.com/proxy/public/v1/ronin/gas-suggestion',
-  [saigon.id]: 'https://wallet-manager-stg.skymavis.one/proxy/public/v1/ronin-testnet/gas-suggestion',
-} as const;
 
 const GAS_PRICE_BUFFER_PERCENTAGE = 2; // 2%
 
@@ -29,21 +22,11 @@ interface EstimateFeesPerGasParams {
   maxPriorityFeePerGas?: Hex;
 }
 
-interface GasPriceLevel {
-  max_priority_fee_per_gas: bigint;
-  max_fee_per_gas: bigint;
-}
-
-interface GasSuggestionResponse {
-  base_fee_per_gas: bigint;
-  exact_base_fee: bigint;
-  low: GasPriceLevel;
-  medium: GasPriceLevel;
-  high: GasPriceLevel;
-}
-
-const handleEIP1559Transaction = async (params: EstimateFeesPerGasParams): Promise<EstimateFeesPerGasReturnType> => {
-  const { chainId, maxFeePerGas: maxFeePerGasParam, maxPriorityFeePerGas: maxPriorityFeePerGasParam } = params;
+const handleEIP1559Transaction = async (
+  client: Client,
+  params: EstimateFeesPerGasParams,
+): Promise<EstimateFeesPerGasReturnType> => {
+  const { maxFeePerGas: maxFeePerGasParam, maxPriorityFeePerGas: maxPriorityFeePerGasParam } = params;
 
   if (maxFeePerGasParam && maxPriorityFeePerGasParam) {
     return {
@@ -53,15 +36,12 @@ const handleEIP1559Transaction = async (params: EstimateFeesPerGasParams): Promi
     };
   }
 
-  const { medium } = await ofetch<GasSuggestionResponse>(`/gas-suggestion`, {
-    baseURL: GAS_SUGGESTION_BASE_URL[chainId],
-  });
-  const { max_priority_fee_per_gas, max_fee_per_gas } = medium;
+  const { maxFeePerGas, maxPriorityFeePerGas } = await viemEstimateFeesPerGas(client);
 
   return {
     gasPrice: '0x0',
-    maxPriorityFeePerGas: maxPriorityFeePerGasParam || numberToHex(max_priority_fee_per_gas),
-    maxFeePerGas: maxFeePerGasParam || numberToHex(max_fee_per_gas),
+    maxPriorityFeePerGas: maxPriorityFeePerGasParam || numberToHex(maxPriorityFeePerGas),
+    maxFeePerGas: maxFeePerGasParam || numberToHex(maxFeePerGas),
   };
 };
 
@@ -91,7 +71,7 @@ export async function estimateFeesPerGas(
   const { type, gasPrice } = params;
 
   try {
-    if (isEIP1559CompatibleTransaction(type)) return await handleEIP1559Transaction(params);
+    if (isEIP1559CompatibleTransaction(type)) return await handleEIP1559Transaction(client, params);
     return await handleLegacyTransaction(client, gasPrice);
   } catch (error) {
     throw new Error('Failed to estimate gas price. This could be due to network issues or RPC problems.');

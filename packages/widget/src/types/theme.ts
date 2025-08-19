@@ -11,7 +11,7 @@ export interface TantoWidgetThemeTokens {
   mode: TantoWidgetThemeMode;
 
   /* General */
-  fontFamily: string | Array<string>;
+  fontFamily: string | string[];
   fontSize: number | string;
 
   /* Intent Colors */
@@ -91,9 +91,17 @@ export interface TantoWidgetThemeTokens {
 
   /* Input */
   inputBorderRadius: number;
-  inputBackgroundColor: string;
-  inputBorderColor: string;
-  inputFocusBorderColor: string;
+  inputBackground: string;
+  inputBorder: string;
+  inputFocusBorder: string;
+
+  /* Checkbox */
+  checkboxBorder: string;
+  checkboxHoverBorder: string;
+  checkboxBackground: string;
+  checkboxHoverBackground: string;
+  checkboxCheckedBackground: string;
+  checkboxCheckedHoverBackground: string;
 }
 
 export type TantoWidgetTheme = TantoWidgetThemeMode | TantoWidgetThemeTokens;

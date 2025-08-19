@@ -44,6 +44,8 @@ export class HttpClient {
     method = 'GET',
     baseUrl = this.headlessConfig.waypointBaseUrl,
     path = '',
+    shouldTransformRequest = true,
+    shouldTransformResponse = true,
     data,
     ...extras
   }: {
@@ -55,6 +57,8 @@ export class HttpClient {
     const res: T = await this.$fetch(path, {
       method,
       baseURL: baseUrl,
+      shouldTransformRequest,
+      shouldTransformResponse,
       ...{ [method.toLowerCase() === 'get' ? 'query' : 'body']: data },
       ...extras,
     });
@@ -123,18 +127,15 @@ export class HttpClient {
     if (this.refreshTokensPromise) return this.refreshTokensPromise;
 
     try {
-      const [accessToken, refreshToken] = await Promise.all([
-        this.sessionRepository.getAccessToken({ acceptExpired: true }),
-        this.sessionRepository.getRefreshToken(),
-      ]);
+      const refreshToken = await this.sessionRepository.getRefreshToken();
 
-      if (!accessToken && !refreshToken) throw new Error('No access token or refresh token found');
+      if (!refreshToken) throw new Error('No refresh token found');
 
       this.refreshTokensPromise = this.call<RefreshTokenResponse>({
         baseUrl: this.headlessConfig.waypointBaseUrl,
         method: 'POST',
         path: '/auth/refresh-token',
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { 'sm-client-id': this.headlessConfig.clientId },
         data: { refreshToken },
         shouldTransformRequest: false,
       });

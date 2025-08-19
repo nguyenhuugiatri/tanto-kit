@@ -1,6 +1,8 @@
 import type { Address, Hash, Hex, PublicClient, TypedDataDefinition } from 'viem';
-import { createPublicClient, hexToString, http, InternalRpcError, UnauthorizedProviderError } from 'viem';
+import { createPublicClient, http, InternalRpcError, toPrefixedMessage, UnauthorizedProviderError } from 'viem';
 
+import { hexToBase64 } from '../utils/convertor';
+import { parseTypedData, prepareTypedData } from '../utils/prepare-typed-data';
 import { WalletApi } from './api/WalletApi';
 import { HeadlessConfig } from './HeadlessConfig';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
@@ -73,9 +75,8 @@ export class WalletService {
   personalSign = async (params: [data: Hex, address: Address]): Promise<Hex> => {
     try {
       return await this.withSignable(async () => {
-        const [data] = params;
-        const messageToSign = hexToString(data);
-        const messageBase64 = btoa(messageToSign);
+        const [message] = params;
+        const messageBase64 = hexToBase64(toPrefixedMessage({ raw: message }));
         const { signature } = await this.walletApi.signMessage({ messageBase64 });
         return signature;
       });
@@ -87,9 +88,9 @@ export class WalletService {
   signTypedDataV4 = async (params: [address: Address, data: TypedDataDefinition | string]): Promise<Hex> => {
     try {
       return await this.withSignable(async () => {
-        const data = params[1];
-        const messageToSign = typeof data === 'string' ? data : JSON.stringify(data);
-        const messageBase64 = btoa(messageToSign);
+        const rawTypedData = params[1];
+        const typedData = parseTypedData(rawTypedData);
+        const messageBase64 = hexToBase64(prepareTypedData(typedData));
         const { signature } = await this.walletApi.signMessage({ messageBase64 });
         return signature;
       });

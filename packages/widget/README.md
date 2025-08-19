@@ -328,3 +328,16 @@ const nextConfig = {
   }
 }
 ```
+
+### Hydration error
+
+When using Server-Side Rendering (SSR) frameworks such as Next.js, you may encounter hydration warnings if the HTML rendered on the server doesn’t match the HTML rendered on the client.
+
+To prevent this, enable the [ssr](https://wagmi.sh/react/guides/ssr) option in your Wagmi config:
+
+```js
+const wagmiConfig = getDefaultConfig({
+  ssr: true,
+  ...
+})
+```

@@ -42,9 +42,16 @@ export function lightTheme(customThemeToken: TantoWidgetCustomThemeTokens = {}):
 
     errorColor: '#F6515E',
     inputBorderRadius: 8,
-    inputBackgroundColor: 'rgba(14, 17, 22, 0.00)',
-    inputBorderColor: 'rgba(205, 213, 229, 0.30)',
-    inputFocusBorderColor: '#4A4F5C',
+    inputBackground: 'rgba(14, 17, 22, 0.00)',
+    inputBorder: 'rgba(205, 213, 229, 0.30)',
+    inputFocusBorder: '#4A4F5C',
+
+    checkboxBorder: 'rgba(205, 213, 229, 0.6)',
+    checkboxHoverBorder: 'rgba(205, 213, 229, 0.8)',
+    checkboxBackground: 'rgba(205, 213, 229, 0.07)',
+    checkboxHoverBackground: 'rgba(205, 213, 229, 0.6)',
+    checkboxCheckedBackground: 'rgba(19, 106, 236, 1)',
+    checkboxCheckedHoverBackground: 'rgba(12, 72, 192, 1)',
 
     ...customThemeToken,
   };

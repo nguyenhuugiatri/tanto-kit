@@ -71,19 +71,15 @@ const StyledSlot = styled.div<{
     transition: 'all 0.3s ease',
   },
   ({ theme, isActive, isLoading, isError, isSuccess }) => {
-    const borderColor = isError
-      ? theme.errorColor
-      : isActive || isSuccess
-      ? theme.inputFocusBorderColor
-      : theme.inputBorderColor;
+    const borderColor = isError ? theme.errorColor : isActive || isSuccess ? theme.inputFocusBorder : theme.inputBorder;
 
     return {
       borderColor,
       cursor: isLoading ? 'not-allowed' : 'default',
       animation: isSuccess
-        ? `${borderLoadingSuccess(theme.inputFocusBorderColor, theme.successColor)} 0.2s linear forwards`
+        ? `${borderLoadingSuccess(theme.inputFocusBorder, theme.successColor)} 0.2s linear forwards`
         : isLoading
-        ? `${borderLoading(theme.inputBorderColor)} 1.5s linear infinite`
+        ? `${borderLoading(theme.inputBorder)} 1.5s linear infinite`
         : undefined,
     };
   },
@@ -141,7 +137,7 @@ function Slot({
     <StyledSlot
       style={
         {
-          '--loading-color': isSuccess ? theme.successColor : theme.inputFocusBorderColor,
+          '--loading-color': isSuccess ? theme.successColor : theme.inputFocusBorder,
         } as CSSProperties
       }
       isActive={isActive}
