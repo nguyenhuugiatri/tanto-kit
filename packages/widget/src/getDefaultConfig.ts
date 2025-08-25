@@ -12,6 +12,7 @@ import { RONIN_WALLET_WEB_LINK } from './constants';
 import { headlessConnector } from './services/headlessWagmiConnector';
 import { getVersionInfo } from './utils/common';
 import { TantoWidgetError, TantoWidgetErrorCodes } from './utils/errors';
+import { setConfig } from './utils/storage';
 
 export const RONIN_WALLET_METADATA = {
   projectId: 'd2ef97836db7eb390bcb2c1e9847ecdc',
@@ -192,6 +193,7 @@ function validateConfig(config: DefaultConfig): void {
 }
 
 export function getDefaultConfig(config: DefaultConfig = {}): Config {
+  setConfig(config);
   validateConfig(config);
   return createConfig(createConfigParameters(config));
 }

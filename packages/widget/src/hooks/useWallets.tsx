@@ -5,6 +5,7 @@ import { useConnectors } from 'wagmi';
 
 import { walletConfigs } from '../configs/walletConfigs';
 import { WALLET_IDS } from '../constants';
+import { useTantoConfig } from '../contexts/tanto/useTantoConfig';
 import type { Wallet } from '../types/wallet';
 import { notEmpty } from '../utils/common';
 import { isDesktop, isMobile } from '../utils/userAgent';
@@ -63,6 +64,7 @@ function createWalletWithConfig(baseWallet: Wallet): Wallet {
 
 export function useWallets() {
   const connectors = useConnectors();
+  const { excludedWalletIds = [] } = useTantoConfig();
   const { isSafe } = useIsSafeWallet();
   const deviceInfo = useMemo(
     () => ({
@@ -74,8 +76,12 @@ export function useWallets() {
   );
 
   const wallets = useMemo(
-    () => connectors.map(connector => createBaseWallet(connector, connectors)).map(createWalletWithConfig),
-    [connectors],
+    () =>
+      connectors
+        .map(connector => createBaseWallet(connector, connectors))
+        .map(createWalletWithConfig)
+        .filter(wallet => !excludedWalletIds.includes(wallet.id)),
+    [connectors, excludedWalletIds],
   );
 
   const walletsByType = useMemo(() => {
@@ -143,10 +149,9 @@ export function useWallets() {
   return useMemo(
     () => ({
       wallets: [...primaryWallets, ...secondaryWallets],
+      walletsByType,
       primaryWallets,
       secondaryWallets,
-      waypointWallet: walletsByType.waypointWallet,
-      headlessWallet: walletsByType.headlessWallet,
     }),
     [primaryWallets, secondaryWallets, walletsByType],
   );

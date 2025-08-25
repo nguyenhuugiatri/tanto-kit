@@ -12,12 +12,13 @@ type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChang
   caption?: string;
   error?: string | null;
   value: string;
-  onChange: (value: string) => void;
   css?: EmotionCSS;
+  secure?: boolean;
+  onChange: (value: string) => void;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, placeholder, autoFocus, caption, error, value, onChange, className, style, css, ...rest }, ref) => {
+  ({ label, placeholder, autoFocus, caption, error, value, secure, onChange, className, style, css, ...rest }, ref) => {
     const theme = useTheme();
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
       const { value } = event.target;
@@ -35,6 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             placeholder={placeholder}
             value={value}
             onChange={handleChange}
+            type={secure ? 'password' : 'text'}
           />
         </InputWrapper>
         {error && <StyledError>{error}</StyledError>}

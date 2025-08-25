@@ -8,6 +8,7 @@ export interface TantoConfig {
   initialChainId?: number;
   createAccountOnConnect?: boolean;
   showConfirmationModal?: boolean;
+  excludedWalletIds?: string[];
   __internal_waypointBaseUrl?: string;
   __internal_mpcBaseUrl?: string;
   __internal_mpcSocketUrl?: string;

@@ -1,8 +1,10 @@
 import type { Address, Hash, Hex, PublicClient, TypedDataDefinition } from 'viem';
 import { createPublicClient, http, InternalRpcError, toPrefixedMessage, UnauthorizedProviderError } from 'viem';
 
-import { hexToBase64 } from '../utils/convertor';
+import { AESDecrypt, arrayBufferToBase64, encryptContent, hexToBase64 } from '../utils/convertor';
 import { parseTypedData, prepareTypedData } from '../utils/prepare-typed-data';
+import { ErrorCode } from './api/errorCode';
+import { HttpError } from './api/HttpClient';
 import { WalletApi } from './api/WalletApi';
 import { HeadlessConfig } from './HeadlessConfig';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
@@ -14,6 +16,7 @@ export class WalletService {
 
   private address: Address | null = null;
   private publicClient: PublicClient;
+  private publicKey: string | null = null;
 
   constructor(
     private headlessConfig: HeadlessConfig,
@@ -37,6 +40,54 @@ export class WalletService {
   getPublicClient(): PublicClient {
     return this.publicClient;
   }
+
+  private genExchangeAsymmetricKey = async () => {
+    try {
+      return await this.withSignable(async () => {
+        const { publicKey } = await this.walletApi.generateExchangeAsymmetricKey();
+        this.publicKey = publicKey;
+        return publicKey;
+      });
+    } catch (error) {
+      throw new InternalRpcError(new Error('Unable to generate exchange asymmetric key', { cause: error }));
+    }
+  };
+
+  getExchangePublicKey = async () => {
+    if (this.publicKey) return this.publicKey;
+
+    try {
+      return await this.withSignable(async () => {
+        const { publicKey } = await this.walletApi.getExchangePublicKey();
+        this.publicKey = publicKey;
+        return publicKey;
+      });
+    } catch (error) {
+      if (error instanceof HttpError && error.code === ErrorCode.MPC_NOT_FOUND)
+        return await this.genExchangeAsymmetricKey();
+      throw error;
+    }
+  };
+
+  pullClientShard = async () => {
+    try {
+      return await this.withSignable(async () => {
+        const publicKey = await this.getExchangePublicKey();
+        const { encryptedContent, encryptionKey } = await encryptContent(publicKey);
+        const { shardCiphertextB64, shardNonceB64 } = await this.walletApi.pullClientShard(
+          arrayBufferToBase64(encryptedContent),
+        );
+
+        return AESDecrypt({
+          ciphertextB64: shardCiphertextB64,
+          nonceB64: shardNonceB64,
+          aesKey: encryptionKey,
+        });
+      });
+    } catch (error) {
+      throw new InternalRpcError(new Error('Unable to pull shard', { cause: error }));
+    }
+  };
 
   async getSignableAddress(): Promise<Address> {
     if (this.address) return this.address;

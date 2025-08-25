@@ -27,6 +27,12 @@ export interface SendTransactionResponse {
   txHash: Hex;
 }
 
+export interface PullShardResponse {
+  shardCiphertextB64: string;
+  shardEncryptedKeyB64: string;
+  shardNonceB64: string;
+}
+
 export class WalletApi {
   static inject = ['headlessConfig', 'httpClient', 'sessionRepository'] as const;
 
@@ -52,6 +58,31 @@ export class WalletApi {
       method: 'POST',
       path: '/keygen',
       data: { url: this.headlessConfig.mpcSocketUrl },
+    });
+  };
+
+  getExchangePublicKey = async (): Promise<{ publicKey: string }> => {
+    return this.httpClient.call<{ publicKey: string }>({
+      baseUrl: this.headlessConfig.mpcBaseUrl,
+      method: 'POST',
+      path: '/get-exchange-public-key',
+    });
+  };
+
+  generateExchangeAsymmetricKey = async (): Promise<{ publicKey: string }> => {
+    return this.httpClient.call<{ publicKey: string }>({
+      baseUrl: this.headlessConfig.mpcBaseUrl,
+      method: 'POST',
+      path: '/generate-exchange-key',
+    });
+  };
+
+  pullClientShard = async (clientEncryptedKey: string): Promise<PullShardResponse> => {
+    return this.httpClient.call<PullShardResponse>({
+      baseUrl: this.headlessConfig.mpcBaseUrl,
+      method: 'POST',
+      path: '/pull-shard',
+      data: { clientEncryptedKey },
     });
   };
 

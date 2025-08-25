@@ -25,6 +25,7 @@ export function useTantoSetup(customConfig: TantoConfig) {
     __internal_waypointBaseUrl: WAYPOINT_BASE_URL,
     __internal_mpcBaseUrl: MPC_BASE_URL,
     __internal_mpcSocketUrl: MPC_SOCKET_URL,
+    excludedWalletIds: [],
     ...customConfig,
   };
 

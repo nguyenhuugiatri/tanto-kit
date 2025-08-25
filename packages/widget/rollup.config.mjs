@@ -49,8 +49,7 @@ const config = defineConfig({
       'vaul',
       'ua-parser-js',
       'qr-code-styling',
-      '@sky-mavis/tanto-connect',
-      '@sky-mavis/tanto-wagmi',
+      '@sky-mavis',
       '@emotion',
       '@radix-ui',
       'motion',
@@ -75,8 +74,10 @@ const config = defineConfig({
     peerDepsExternal(),
     json(),
     typescript({
+      tsconfig: './tsconfig.json',
       useTsconfigDeclarationDir: true,
       clean: true,
+      check: false,
     }),
     resolve({
       browser: true,

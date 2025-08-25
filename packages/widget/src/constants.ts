@@ -32,6 +32,7 @@ export const MAX_Z_INDEX = 2147483647;
 export const OVERLAY_Z_INDEX = MAX_Z_INDEX - 2;
 export const CONTENT_Z_INDEX = MAX_Z_INDEX - 1;
 export const RESEND_EMAIL_PENDING_TIME = 30;
+export const RON_LOGO_URL = 'https://cdn.skymavis.com/ronin/2020/ron/logo.png';
 
 // Analytics
 export const ANALYTIC_PUBLIC_KEY = '34cb0c94-cace-4e79-b708-96112181ddbb';
