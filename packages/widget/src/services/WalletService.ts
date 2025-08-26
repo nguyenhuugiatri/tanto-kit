@@ -1,12 +1,22 @@
 import type { Address, Hash, Hex, PublicClient, TypedDataDefinition } from 'viem';
-import { createPublicClient, http, InternalRpcError, toPrefixedMessage, UnauthorizedProviderError } from 'viem';
+import {
+  bytesToString,
+  concatBytes,
+  createPublicClient,
+  http,
+  InternalRpcError,
+  toPrefixedMessage,
+  UnauthorizedProviderError,
+} from 'viem';
 
-import { AESDecrypt, arrayBufferToBase64, encryptContent, hexToBase64 } from '../utils/convertor';
+import { delay } from '../utils/common';
+import { hexToBase64 } from '../utils/convertor';
 import { parseTypedData, prepareTypedData } from '../utils/prepare-typed-data';
 import { ErrorCode } from './api/errorCode';
 import { HttpError } from './api/HttpClient';
 import { WalletApi } from './api/WalletApi';
 import { HeadlessConfig } from './HeadlessConfig';
+import { AESEncrypt, deriveKey, getV1PackedContent, unpackEncryptedContent } from './helpers/crypto';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
 import { TransactionParams } from './helpers/types';
 import { SessionRepository } from './SessionRepository';
@@ -16,7 +26,6 @@ export class WalletService {
 
   private address: Address | null = null;
   private publicClient: PublicClient;
-  private publicKey: string | null = null;
 
   constructor(
     private headlessConfig: HeadlessConfig,
@@ -43,25 +52,17 @@ export class WalletService {
 
   private genExchangeAsymmetricKey = async () => {
     try {
-      return await this.withSignable(async () => {
-        const { publicKey } = await this.walletApi.generateExchangeAsymmetricKey();
-        this.publicKey = publicKey;
-        return publicKey;
-      });
+      const { publicKey } = await this.walletApi.generateExchangeAsymmetricKey();
+      return publicKey;
     } catch (error) {
       throw new InternalRpcError(new Error('Unable to generate exchange asymmetric key', { cause: error }));
     }
   };
 
   getExchangePublicKey = async () => {
-    if (this.publicKey) return this.publicKey;
-
     try {
-      return await this.withSignable(async () => {
-        const { publicKey } = await this.walletApi.getExchangePublicKey();
-        this.publicKey = publicKey;
-        return publicKey;
-      });
+      const { publicKey } = await this.walletApi.getExchangePublicKey();
+      return publicKey;
     } catch (error) {
       if (error instanceof HttpError && error.code === ErrorCode.MPC_NOT_FOUND)
         return await this.genExchangeAsymmetricKey();
@@ -69,23 +70,54 @@ export class WalletService {
     }
   };
 
-  pullClientShard = async () => {
+  decryptClientShard = async ({
+    encryptedClientShard,
+    recoveryPassword,
+  }: {
+    encryptedClientShard: string;
+    recoveryPassword: string;
+  }) => {
     try {
-      return await this.withSignable(async () => {
-        const publicKey = await this.getExchangePublicKey();
-        const { encryptedContent, encryptionKey } = await encryptContent(publicKey);
-        const { shardCiphertextB64, shardNonceB64 } = await this.walletApi.pullClientShard(
-          arrayBufferToBase64(encryptedContent),
-        );
+      const v1PackedContent = getV1PackedContent(encryptedClientShard);
+      const { authTag, cipherText, iv } = unpackEncryptedContent(v1PackedContent);
 
-        return AESDecrypt({
-          ciphertextB64: shardCiphertextB64,
-          nonceB64: shardNonceB64,
-          aesKey: encryptionKey,
-        });
+      const accessToken = await this.sessionRepository.getAccessToken();
+      if (!accessToken) throw new Error('No access token found.');
+
+      const key = await deriveKey(accessToken, recoveryPassword);
+
+      // Better UX
+      await delay(500);
+
+      const shardInBytes = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        concatBytes([cipherText, authTag]),
+      );
+
+      const base64Shard = bytesToString(new Uint8Array(shardInBytes));
+
+      return base64Shard;
+    } catch (error) {
+      throw new InternalRpcError(new Error('Unable to decrypt client shard', { cause: error }));
+    }
+  };
+
+  migrateToPasswordless = async ({ clientShard }: { clientShard: string }) => {
+    try {
+      const exchangePublicKey = await this.getExchangePublicKey();
+      const { ciphertextB64, encryptedKeyB64, nonceB64 } = await AESEncrypt({
+        content: clientShard,
+        key: exchangePublicKey,
+      });
+
+      await this.walletApi.migrateToPasswordless({
+        shardCiphertextB64: ciphertextB64,
+        shardEncryptedKeyB64: encryptedKeyB64,
+        shardNonceB64: nonceB64,
       });
     } catch (error) {
-      throw new InternalRpcError(new Error('Unable to pull shard', { cause: error }));
+      throw new InternalRpcError(new Error('Unable to migrate to passwordless', { cause: error }));
     }
   };
 
@@ -112,14 +144,12 @@ export class WalletService {
     try {
       const { address, preferMethod } = await this.walletApi.getUserProfile();
       if (preferMethod !== 'passwordless') {
-        throw new UnauthorizedProviderError(new Error('Passwordless authentication is required for this wallet.'));
+        throw new Error('Preferred method is not supported.');
       }
       this.address = address;
       return address;
     } catch (error) {
-      throw new UnauthorizedProviderError(
-        new Error('Failed to fetch user profile. Please reconnect your wallet.', { cause: error }),
-      );
+      throw new InternalRpcError(new Error('Unable to fetch user profile', { cause: error }));
     }
   }
 

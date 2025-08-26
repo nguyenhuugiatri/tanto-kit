@@ -1,9 +1,19 @@
+import { queryOptions } from '@tanstack/react-query';
+
 import { headlessInjector } from './headlessInjector';
 
 const authApi = headlessInjector.resolve('authApi');
 const walletApi = headlessInjector.resolve('walletApi');
+const walletService = headlessInjector.resolve('walletService');
 
-export const query = {} as const;
+export const query = {
+  encryptedClientShard: () =>
+    queryOptions({
+      staleTime: Infinity,
+      queryKey: ['tantoGetEncryptedClientShard'],
+      queryFn: walletApi.getEncryptedClientShard,
+    }),
+} as const;
 
 export const mutation = {
   generateNonce: () => ({
@@ -29,5 +39,13 @@ export const mutation = {
   createKeylessWallet: () => ({
     mutationKey: ['tantoCreateKeylessWallet'],
     mutationFn: walletApi.createKeylessWallet,
+  }),
+  decryptClientShard: () => ({
+    mutationKey: ['tantoDecryptClientShard'],
+    mutationFn: walletService.decryptClientShard,
+  }),
+  migrateToPasswordless: () => ({
+    mutationKey: ['tantoMigrateToPasswordless'],
+    mutationFn: walletService.migrateToPasswordless,
   }),
 } as const;

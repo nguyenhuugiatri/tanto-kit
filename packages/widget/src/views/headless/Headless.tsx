@@ -23,13 +23,15 @@ import { StepOTP } from './components/StepOTP';
 import { StepSelectProvider } from './components/StepSelectProvider';
 import { StepSuccess } from './components/StepSuccess';
 import { StepSuccessNewUser } from './components/StepSuccessNewUser';
+import { StepUpgradeToPasswordless } from './components/StepUpgradeToPasswordless';
 
 const enum Step {
   SELECT_METHOD = 1,
   OTP = 2,
   CREATE_NEW_KEYLESS_WALLET = 3,
-  SUCCESS = 4,
-  RECEIVE_NEWS = 5,
+  UPGRADE_TO_PASSWORDLESS = 4,
+  SUCCESS = 5,
+  RECEIVE_NEWS = 6,
 }
 
 interface EmailFormData {
@@ -81,9 +83,13 @@ export function Headless(props: BoxProps) {
   const handleBack = useCallbackRef(() => {
     if (step === Step.SELECT_METHOD) {
       goBackRouter();
-    } else {
-      setStep(prev => prev - 1);
+      return;
     }
+    if (step === Step.UPGRADE_TO_PASSWORDLESS || step === Step.CREATE_NEW_KEYLESS_WALLET) {
+      setStep(Step.SELECT_METHOD);
+      return;
+    }
+    setStep(prev => prev - 1);
   });
 
   const handleEmailSubmit = useCallbackRef(async ({ email }: EmailFormData) => {
@@ -108,10 +114,7 @@ export function Headless(props: BoxProps) {
       const { preferMethod } = await getUserProfileMutation.mutateAsync();
 
       if (preferMethod !== 'passwordless') {
-        if (waypointWallet) {
-          setSelectedWallet(waypointWallet);
-          replaceRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
-        }
+        setStep(Step.UPGRADE_TO_PASSWORDLESS);
         return;
       }
 
@@ -135,11 +138,25 @@ export function Headless(props: BoxProps) {
   });
 
   const handleResend = useCallbackRef(() => {
+    authenticateOTPMutation.reset();
     otpPasswordlessMutation.mutate({ email });
   });
 
   const handleConnect = useCallbackRef(() => {
     connect();
+  });
+
+  const handleUpgradeSuccess = useCallbackRef(async () => {
+    await getUserProfileMutation.mutateAsync();
+    connect();
+    setStep(Step.SUCCESS);
+  });
+
+  const handleCancelUpgrade = useCallbackRef(() => {
+    if (waypointWallet) {
+      setSelectedWallet(waypointWallet);
+      replaceRouter(Route.CONNECT_INJECTOR, { title: waypointWallet.name });
+    }
   });
 
   useEffect(() => {
@@ -220,6 +237,10 @@ export function Headless(props: BoxProps) {
 
         {step === Step.CREATE_NEW_KEYLESS_WALLET && (
           <StepCreatingKeyless handleCreateKeylessWallet={handleCreateKeylessWallet} />
+        )}
+
+        {step === Step.UPGRADE_TO_PASSWORDLESS && (
+          <StepUpgradeToPasswordless onUpgradeSuccess={handleUpgradeSuccess} onCancelUpgrade={handleCancelUpgrade} />
         )}
 
         {step === Step.SUCCESS && <StepSuccess />}

@@ -1,12 +1,13 @@
 import { Chain } from 'viem';
 import { ronin } from 'viem/chains';
 
-import { MPC_BASE_URL, MPC_SOCKET_URL, WAYPOINT_BASE_URL } from '../constants';
+import { MPC_BASE_URL, MPC_BASE_URL_V1, MPC_SOCKET_URL, WAYPOINT_BASE_URL } from '../constants';
 
 export class HeadlessConfig {
   private _chain: Chain;
   private _clientId: string;
   private _waypointBaseUrl: string;
+  private _mpcBaseUrlV1: string;
   private _mpcBaseUrl: string;
   private _mpcSocketUrl: string;
 
@@ -14,12 +15,14 @@ export class HeadlessConfig {
     chain: Chain;
     clientId: string;
     waypointBaseUrl: string;
+    mpcBaseUrlV1: string;
     mpcBaseUrl: string;
     mpcSocketUrl: string;
   }) {
     this._chain = config.chain;
     this._clientId = config.clientId;
     this._waypointBaseUrl = config.waypointBaseUrl;
+    this._mpcBaseUrlV1 = config.mpcBaseUrlV1;
     this._mpcBaseUrl = config.mpcBaseUrl;
     this._mpcSocketUrl = config.mpcSocketUrl;
   }
@@ -40,6 +43,10 @@ export class HeadlessConfig {
     return this._mpcBaseUrl;
   }
 
+  get mpcBaseUrlV1() {
+    return this._mpcBaseUrlV1;
+  }
+
   get mpcSocketUrl() {
     return this._mpcSocketUrl;
   }
@@ -54,6 +61,10 @@ export class HeadlessConfig {
 
   set waypointBaseUrl(value: string) {
     this._waypointBaseUrl = value;
+  }
+
+  set mpcBaseUrlV1(value: string) {
+    this._mpcBaseUrlV1 = value;
   }
 
   set mpcBaseUrl(value: string) {
@@ -72,6 +83,7 @@ export class HeadlessConfig {
 const defaultConfig = {
   chain: ronin,
   waypointBaseUrl: WAYPOINT_BASE_URL,
+  mpcBaseUrlV1: MPC_BASE_URL_V1,
   mpcBaseUrl: MPC_BASE_URL,
   mpcSocketUrl: MPC_SOCKET_URL,
   clientId: '',

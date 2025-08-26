@@ -23,14 +23,22 @@ export interface SendTransactionRequest {
   rpcUrl: string;
 }
 
+export interface MigrateToPasswordlessRequest {
+  shardCiphertextB64: string;
+  shardEncryptedKeyB64: string;
+  shardNonceB64: string;
+}
+
 export interface SendTransactionResponse {
   txHash: Hex;
 }
 
-export interface PullShardResponse {
-  shardCiphertextB64: string;
-  shardEncryptedKeyB64: string;
-  shardNonceB64: string;
+export interface DecryptClientShardResponse {
+  data: {
+    key: string;
+    updatedAt: number;
+  };
+  status: 'OK';
 }
 
 export class WalletApi {
@@ -77,12 +85,27 @@ export class WalletApi {
     });
   };
 
-  pullClientShard = async (clientEncryptedKey: string): Promise<PullShardResponse> => {
-    return this.httpClient.call<PullShardResponse>({
+  getEncryptedClientShard = async (): Promise<DecryptClientShardResponse> => {
+    return this.httpClient.call<DecryptClientShardResponse>({
+      baseUrl: this.headlessConfig.mpcBaseUrlV1,
+      path: '/backup/keys',
+    });
+  };
+
+  migrateToPasswordless = async ({
+    shardCiphertextB64,
+    shardEncryptedKeyB64,
+    shardNonceB64,
+  }: MigrateToPasswordlessRequest): Promise<{ uuid: string }> => {
+    return this.httpClient.call<{ uuid: string }>({
       baseUrl: this.headlessConfig.mpcBaseUrl,
       method: 'POST',
-      path: '/pull-shard',
-      data: { clientEncryptedKey },
+      path: '/migrate-shard',
+      data: {
+        shardCiphertextB64,
+        shardEncryptedKeyB64,
+        shardNonceB64,
+      },
     });
   };
 

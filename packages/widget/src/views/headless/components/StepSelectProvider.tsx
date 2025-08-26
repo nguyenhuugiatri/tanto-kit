@@ -25,6 +25,7 @@ interface StepSelectProviderProps {
 }
 
 const Form = styled.form({
+  width: '100%',
   display: 'flex',
   flexDirection: 'column',
   marginTop: 32,

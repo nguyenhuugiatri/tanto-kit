@@ -10,6 +10,7 @@ export interface TantoConfig {
   showConfirmationModal?: boolean;
   excludedWalletIds?: string[];
   __internal_waypointBaseUrl?: string;
+  __internal_mpcBaseUrlV1?: string;
   __internal_mpcBaseUrl?: string;
   __internal_mpcSocketUrl?: string;
 }
