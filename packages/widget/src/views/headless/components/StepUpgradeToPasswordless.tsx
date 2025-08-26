@@ -11,7 +11,7 @@ import { TransitionedView } from '../../../components/animated-containers/Transi
 import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
 import { DotLoading } from '../../../components/dot-loading/DotLoading';
-import { Input } from '../../../components/input/Input';
+import { PasswordInput } from '../../../components/password-input/PasswordInput';
 import { mutation, query } from '../../../services/queries';
 
 interface StepUpgradeToPasswordless {
@@ -108,8 +108,7 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
               name="password"
               control={control}
               render={({ field }) => (
-                <Input
-                  secure
+                <PasswordInput
                   autoFocus
                   placeholder="Recovery password"
                   readOnly={isPending}
@@ -126,7 +125,7 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
               Start upgrade
             </Button>
 
-            <ActionButton onClick={onCancelUpgrade}>I don't want to upgrade</ActionButton>
+            <ActionButton onClick={onCancelUpgrade}>Not now? Continue with current version</ActionButton>
           </Form>
         </Box>
       )}
