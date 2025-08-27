@@ -90,4 +90,19 @@ export class AuthApi {
     ]);
     return authData;
   };
+
+  exchangeToken = async ({ idToken }: { idToken: string }): Promise<AuthenticateWithOtpResponse> => {
+    const authData = await this.httpClient.call<AuthenticateWithOtpResponse>({
+      method: 'POST',
+      path: '/auth/exchange-token',
+      headers: { 'sm-client-id': this.headlessConfig.clientId },
+      shouldTransformRequest: false,
+      data: { idToken },
+    });
+    await Promise.all([
+      this.sessionRepository.setAccessToken(authData.accessToken),
+      this.sessionRepository.setRefreshToken(authData.refreshToken),
+    ]);
+    return authData;
+  };
 }

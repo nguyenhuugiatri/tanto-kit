@@ -9,9 +9,13 @@ const walletService = headlessInjector.resolve('walletService');
 export const query = {
   encryptedClientShard: () =>
     queryOptions({
-      staleTime: Infinity,
       queryKey: ['tantoGetEncryptedClientShard'],
       queryFn: walletApi.getEncryptedClientShard,
+      staleTime: Infinity,
+      gcTime: Infinity,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
     }),
 } as const;
 
@@ -31,6 +35,10 @@ export const mutation = {
   authenticateWithOTP: () => ({
     mutationKey: ['tantoAuthenticateWithOTP'],
     mutationFn: authApi.authenticateWithOtp,
+  }),
+  exchangeToken: () => ({
+    mutationKey: ['tantoExchangeToken'],
+    mutationFn: authApi.exchangeToken,
   }),
   getUserProfile: () => ({
     mutationKey: ['tantoGetUserProfileAPI'],

@@ -4,10 +4,12 @@ import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
 import { Countdown } from '../../../components/countdown/Countdown';
 import { Input } from '../../../components/input/Input';
 import { TRANSITION_DURATION } from '../../../constants';
+import { SocialButtons } from './SocialButtons';
 
 const emailSchema = z.object({
   email: z.email('Invalid email address.').min(1, 'Email is required.'),
@@ -16,25 +18,28 @@ const emailSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>;
 
 interface StepSelectProviderProps {
-  isLoading?: boolean;
-  defaultEmail?: string;
-  waitSeconds?: number;
-  error?: string;
+  isEmailSubmitting?: boolean;
+  retryCountdownSeconds?: number;
   onEmailChange: (email: string) => void;
-  onSubmit: (data: EmailFormData) => void;
+  onEmailSubmit: (data: EmailFormData) => void;
+  onSocialSignInSuccess: () => void;
 }
 
 const Form = styled.form({
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
-  marginTop: 32,
+  marginTop: '32px !important',
   gap: 16,
 });
 
-export function StepSelectProvider(props: StepSelectProviderProps) {
-  const { onSubmit, defaultEmail = '', waitSeconds = 0, isLoading = false, error, onEmailChange } = props;
-
+export function StepSelectProvider({
+  isEmailSubmitting = false,
+  retryCountdownSeconds = 0,
+  onEmailChange,
+  onEmailSubmit,
+  onSocialSignInSuccess,
+}: StepSelectProviderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -45,12 +50,9 @@ export function StepSelectProvider(props: StepSelectProviderProps) {
   } = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
     mode: 'onSubmit',
-    defaultValues: {
-      email: defaultEmail,
-    },
   });
 
-  const email = watch('email');
+  const emailValue = watch('email');
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -59,38 +61,51 @@ export function StepSelectProvider(props: StepSelectProviderProps) {
     return () => clearTimeout(timeout);
   }, []);
 
+  const canSubmitEmail = emailValue && isValid && !isEmailSubmitting;
+
   return (
-    <Form onSubmit={handleSubmit(onSubmit)}>
-      <Controller
-        name="email"
-        control={control}
-        render={({ field }) => (
-          <Input
-            placeholder="your@gmail.com"
-            ref={inputRef}
-            readOnly={isLoading}
-            error={error || errors.email?.message}
-            value={field.value}
-            onChange={email => {
-              field.onChange(email);
-              onEmailChange(email);
-            }}
-          />
-        )}
-      />
-      <Countdown pendingTime={waitSeconds}>
-        {({ count }) => {
-          return count === 0 ? (
-            <Button fullWidth disabled={!email || !isValid} loading={isLoading} type="submit">
-              Continue
-            </Button>
-          ) : (
-            <Button fullWidth disabled>
-              Try again in {count.toString().padStart(2, '0')}s
-            </Button>
-          );
-        }}
-      </Countdown>
-    </Form>
+    <Box vertical gap={16}>
+      <Form onSubmit={handleSubmit(onEmailSubmit)}>
+        <Controller
+          name="email"
+          control={control}
+          render={({ field }) => (
+            <Input
+              placeholder="your@gmail.com"
+              ref={inputRef}
+              readOnly={isEmailSubmitting}
+              error={errors.email?.message}
+              value={field.value}
+              onChange={email => {
+                field.onChange(email);
+                onEmailChange(email);
+              }}
+            />
+          )}
+        />
+
+        <Countdown pendingTime={retryCountdownSeconds}>
+          {({ count }) => {
+            const isCountingDown = count > 0;
+
+            if (isCountingDown) {
+              return (
+                <Button fullWidth disabled>
+                  Try again in {count.toString().padStart(2, '0')}s
+                </Button>
+              );
+            }
+
+            return (
+              <Button fullWidth disabled={!canSubmitEmail} loading={isEmailSubmitting} type="submit">
+                Continue
+              </Button>
+            );
+          }}
+        </Countdown>
+      </Form>
+
+      <SocialButtons onSuccess={onSocialSignInSuccess} />
+    </Box>
   );
 }

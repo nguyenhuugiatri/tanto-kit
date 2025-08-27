@@ -1,5 +1,7 @@
 import { createContext } from 'react';
 
+import { SocialProvider } from '../../types/social';
+
 export interface TantoConfig {
   clientId?: string;
   reducedMotion?: boolean;
@@ -9,6 +11,7 @@ export interface TantoConfig {
   createAccountOnConnect?: boolean;
   showConfirmationModal?: boolean;
   excludedWalletIds?: string[];
+  excludedSocialProviders?: SocialProvider[];
   __internal_waypointBaseUrl?: string;
   __internal_mpcBaseUrlV1?: string;
   __internal_mpcBaseUrl?: string;

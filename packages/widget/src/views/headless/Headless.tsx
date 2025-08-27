@@ -38,47 +38,55 @@ interface EmailFormData {
   email: string;
 }
 
-const OTP_ERRORS = {
+const OTP_ERROR_MESSAGES = {
   400046: 'Invalid code. Please try again.',
 } as const;
 
-const getOTPError = (error: { code?: number; message: string }): string =>
-  OTP_ERRORS[error.code as keyof typeof OTP_ERRORS] || error.message || 'Failed to verify OTP.';
-
 const STEPS_WITHOUT_BACK = new Set([Step.SUCCESS, Step.RECEIVE_NEWS, Step.CREATE_NEW_KEYLESS_WALLET]);
+
+const getOTPErrorMessage = (error: { code?: number; message: string }): string =>
+  OTP_ERROR_MESSAGES[error.code as keyof typeof OTP_ERROR_MESSAGES] || error.message || 'Failed to verify OTP.';
 
 export function Headless(props: BoxProps) {
   const [step, setStep] = useState(Step.SELECT_METHOD);
   const [email, setEmail] = useState('');
-  const [waitSeconds, setWaitSeconds] = useState(0);
+  const [retryWaitSeconds, setRetryWaitSeconds] = useState(0);
   const [agreeReceiveNews, setAgreeReceiveNews] = useState(false);
 
-  const isModal = useIsModal();
   const isNewUser = useRef(false);
 
+  const isModal = useIsModal();
   const { goBack: goBackRouter, replace: replaceRouter } = useWidgetRouter();
   const { waypointWallet, selectedConnector, setSelectedWallet } = useWidgetConnect();
   const { connect, status: connectStatus } = useConnectAndAuth({
     connector: selectedConnector,
   });
 
-  const otpPasswordlessMutation = useMutation({
+  const initOTPPasswordlessMutation = useMutation({
     ...mutation.initOTPPasswordless(),
     onSuccess: () => {
-      setWaitSeconds(0);
+      setRetryWaitSeconds(0);
       authenticateOTPMutation.reset();
     },
-    onError: (error: Error) => setWaitSeconds(getSecondsFromMessage(error.message)),
+    onError: (error: Error) => setRetryWaitSeconds(getSecondsFromMessage(error.message)),
   });
-
   const authenticateOTPMutation = useMutation(mutation.authenticateWithOTP());
   const createKeylessWalletMutation = useMutation(mutation.createKeylessWallet());
   const getUserProfileMutation = useMutation(mutation.getUserProfile());
 
   const otpError = useMemo(
-    () => (authenticateOTPMutation.error ? getOTPError(authenticateOTPMutation.error) : undefined),
+    () => (authenticateOTPMutation.error ? getOTPErrorMessage(authenticateOTPMutation.error) : undefined),
     [authenticateOTPMutation.error],
   );
+
+  const isOTPLoading = useMemo(
+    () => authenticateOTPMutation.isPending || getUserProfileMutation.isPending,
+    [authenticateOTPMutation.isPending, getUserProfileMutation.isPending],
+  );
+
+  const showBackButton = useMemo(() => !STEPS_WITHOUT_BACK.has(step), [step]);
+  const showLogo = step === Step.SELECT_METHOD;
+  const title = step === Step.SELECT_METHOD ? 'Sign in with Email & OTP' : null;
 
   const handleBack = useCallbackRef(() => {
     if (step === Step.SELECT_METHOD) {
@@ -94,7 +102,7 @@ export function Headless(props: BoxProps) {
 
   const handleEmailSubmit = useCallbackRef(async ({ email }: EmailFormData) => {
     try {
-      await otpPasswordlessMutation.mutateAsync({ email });
+      await initOTPPasswordlessMutation.mutateAsync({ email });
       setEmail(email);
       setStep(Step.OTP);
     } catch (error) {
@@ -131,19 +139,21 @@ export function Headless(props: BoxProps) {
       await createKeylessWalletMutation.mutateAsync();
       // Ensure the address is set in the session
       await getUserProfileMutation.mutateAsync();
-      setStep(Step.RECEIVE_NEWS);
+
+      if (isNewUser.current) {
+        setStep(Step.RECEIVE_NEWS);
+        return;
+      }
+
+      connect();
     } catch (error) {
       console.debug('Failed to create keyless wallet:', error);
     }
   });
 
-  const handleResend = useCallbackRef(() => {
+  const handleResendOTP = useCallbackRef(() => {
     authenticateOTPMutation.reset();
-    otpPasswordlessMutation.mutate({ email });
-  });
-
-  const handleConnect = useCallbackRef(() => {
-    connect();
+    initOTPPasswordlessMutation.mutate({ email });
   });
 
   const handleUpgradeSuccess = useCallbackRef(async () => {
@@ -159,11 +169,28 @@ export function Headless(props: BoxProps) {
     }
   });
 
+  const handleSocialSignInSuccess = useCallbackRef(async () => {
+    try {
+      const { preferMethod } = await getUserProfileMutation.mutateAsync();
+
+      if (preferMethod !== 'passwordless') {
+        setStep(Step.UPGRADE_TO_PASSWORDLESS);
+        return;
+      }
+
+      connect();
+    } catch (error) {
+      if (error instanceof HttpError && error.code === ErrorCode.MPC_NOT_FOUND) {
+        setStep(Step.CREATE_NEW_KEYLESS_WALLET);
+      }
+    }
+  });
+
   useEffect(() => {
-    otpPasswordlessMutation.reset();
+    initOTPPasswordlessMutation.reset();
     authenticateOTPMutation.reset();
     isNewUser.current = false;
-    setWaitSeconds(0);
+    setRetryWaitSeconds(0);
   }, [email]);
 
   useEffect(() => {
@@ -197,11 +224,6 @@ export function Headless(props: BoxProps) {
     }
   });
 
-  const showBackButton = !STEPS_WITHOUT_BACK.has(step);
-  const showLogo = step === Step.SELECT_METHOD;
-  const title = step === Step.SELECT_METHOD ? 'Sign in with Email & OTP' : null;
-  const isOTPLoading = authenticateOTPMutation.isPending || getUserProfileMutation.isPending;
-
   return (
     <Box fullWidth vertical {...props}>
       <KeylessHeader
@@ -216,10 +238,11 @@ export function Headless(props: BoxProps) {
       <TransitionedView viewKey={step}>
         {step === Step.SELECT_METHOD && (
           <StepSelectProvider
-            onSubmit={handleEmailSubmit}
-            waitSeconds={waitSeconds}
-            isLoading={otpPasswordlessMutation.isPending}
+            isEmailSubmitting={initOTPPasswordlessMutation.isPending}
+            retryCountdownSeconds={retryWaitSeconds}
+            onEmailSubmit={handleEmailSubmit}
             onEmailChange={setEmail}
+            onSocialSignInSuccess={handleSocialSignInSuccess}
           />
         )}
 
@@ -228,7 +251,7 @@ export function Headless(props: BoxProps) {
             email={email}
             onOTPChange={handleOTPChange}
             onOTPSubmit={handleSubmitOTP}
-            onResend={handleResend}
+            onResend={handleResendOTP}
             isLoading={isOTPLoading}
             error={otpError}
             isSuccess={authenticateOTPMutation.isSuccess}
@@ -246,7 +269,7 @@ export function Headless(props: BoxProps) {
         {step === Step.SUCCESS && <StepSuccess />}
 
         {step === Step.RECEIVE_NEWS && (
-          <StepSuccessNewUser checked={agreeReceiveNews} setChecked={setAgreeReceiveNews} connect={handleConnect} />
+          <StepSuccessNewUser checked={agreeReceiveNews} setChecked={setAgreeReceiveNews} onContinue={connect} />
         )}
       </TransitionedView>
     </Box>

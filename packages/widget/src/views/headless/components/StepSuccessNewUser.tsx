@@ -24,15 +24,15 @@ const StyledDescription = styled.div(({ theme }) => ({
 interface StepSuccessNewUserProps {
   checked: boolean;
   setChecked: (checked: boolean) => void;
-  connect: () => void;
+  onContinue: () => void;
 }
 
-export function StepSuccessNewUser({ checked, setChecked, connect }: StepSuccessNewUserProps) {
+export function StepSuccessNewUser({ checked, setChecked, onContinue }: StepSuccessNewUserProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleConnect = useCallbackRef(() => {
+  const handleContinue = useCallbackRef(() => {
     setIsLoading(true);
-    connect();
+    onContinue();
   });
 
   return (
@@ -43,7 +43,7 @@ export function StepSuccessNewUser({ checked, setChecked, connect }: StepSuccess
         <StyledDescription>You can now fully enjoy your wallet.</StyledDescription>
         <Checkbox checked={checked} onChange={setChecked} label="I agree to receive updates & news" />
       </Box>
-      <Button fullWidth loading={isLoading} onClick={handleConnect}>
+      <Button fullWidth loading={isLoading} onClick={handleContinue}>
         Let's go
       </Button>
     </Box>
