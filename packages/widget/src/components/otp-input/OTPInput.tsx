@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import type { OTPInputProps, SlotProps } from 'input-otp';
 import { OTPInput as OTPInputComponent } from 'input-otp';
 import { CSSProperties, forwardRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Box } from '../box/Box';
 
@@ -32,23 +31,14 @@ const caretBlink = keyframes`
 `;
 
 const borderLoading = (fromColor: string) => keyframes`
-  0% {
-    box-shadow: 0 0 0 0 ${fromColor};
-  }
-  50% {
-    box-shadow: 0 0 0 2px var(--loading-color);
-  }
-  100% {
-    box-shadow: 0 0 0 0 ${fromColor};
-  }
+  0% { box-shadow: 0 0 0 0 ${fromColor}; }
+  50% { box-shadow: 0 0 0 2px var(--loading-color); }
+  100% { box-shadow: 0 0 0 0 ${fromColor}; }
 `;
+
 const borderLoadingSuccess = (fromColor: string, toColor: string) => keyframes`
-  0% {
-    box-shadow: 0 0 0 1px ${fromColor};
-  }
-  100% {
-    box-shadow: 0 0 0 2px ${toColor};
-  }
+  0% { box-shadow: 0 0 0 1px ${fromColor}; }
+  100% { box-shadow: 0 0 0 2px ${toColor}; }
 `;
 
 const StyledSlot = styled.div<{
@@ -67,8 +57,6 @@ const StyledSlot = styled.div<{
     justifyContent: 'center',
     borderRadius: '10px',
     border: '1px solid',
-    outline: '0px solid transparent',
-    outlineOffset: '0px',
     transition: 'all 0.3s ease',
   },
   ({ theme, isActive, isLoading, isError, isSuccess }) => {
@@ -97,7 +85,7 @@ const StyledCaret = styled.div`
 `;
 
 const StyledCaretLine = styled.div(({ theme }) => ({
-  width: '2px',
+  width: 2,
   height: 16,
   backgroundColor: theme.bodyText,
 }));
@@ -108,7 +96,7 @@ const StyledContainer = styled.div<{ isError?: boolean }>(
     alignItems: 'center',
   },
   ({ isError }) => ({
-    animation: isError ? `${shake} 0.15s ease-in-out 0s` : 'none',
+    animation: isError ? `${shake} 0.15s ease-in-out` : 'none',
   }),
 );
 
@@ -123,15 +111,9 @@ const StyledError = styled.div(({ theme }) => ({
   fontSize: 14,
 }));
 
-function Slot({
-  isActive,
-  char,
-  hasFakeCaret,
-  secure,
-  isLoading = false,
-  isError,
-  isSuccess,
-}: SlotProps & CodeInputShareProps) {
+type SlotWithProps = SlotProps & CodeInputShareProps;
+
+function Slot({ isActive, char, hasFakeCaret, secure, isLoading = false, isError, isSuccess }: SlotWithProps) {
   const theme = useTheme();
 
   return (
@@ -158,7 +140,7 @@ function Slot({
 
 export const OTPInput = forwardRef<HTMLInputElement, CodeInputProps>(
   ({ length = 6, secure, isLoading, error, isSuccess, ...props }, ref) => {
-    const isError = !!error;
+    const hasError = !!error;
     const isFull = props.value?.length === length;
 
     return (
@@ -169,16 +151,16 @@ export const OTPInput = forwardRef<HTMLInputElement, CodeInputProps>(
           disabled={isLoading}
           maxLength={length}
           render={({ slots }) => (
-            <StyledContainer isError={isError}>
+            <StyledContainer isError={hasError}>
               <StyledSlotContainer>
-                {slots.map(slot => (
+                {slots.map((slot, index) => (
                   <Slot
+                    key={index}
                     {...slot}
-                    key={uuidv4()}
                     isActive={slot.isActive || isFull}
-                    isLoading={isLoading}
+                    isLoading={!!isLoading}
                     secure={secure}
-                    isError={isError}
+                    isError={hasError}
                     isSuccess={isSuccess}
                   />
                 ))}
@@ -186,7 +168,7 @@ export const OTPInput = forwardRef<HTMLInputElement, CodeInputProps>(
             </StyledContainer>
           )}
         />
-        {isError && <StyledError>{error}</StyledError>}
+        {hasError && <StyledError>{error}</StyledError>}
       </Box>
     );
   },
