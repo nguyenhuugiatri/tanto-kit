@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import type { OTPInputProps, SlotProps } from 'input-otp';
 import { OTPInput as OTPInputComponent } from 'input-otp';
 import { CSSProperties, forwardRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Box } from '../box/Box';
 
@@ -164,7 +165,6 @@ export const OTPInput = forwardRef<HTMLInputElement, CodeInputProps>(
       <Box vertical gap={4}>
         <OTPInputComponent
           ref={ref}
-          autoFocus
           {...props}
           disabled={isLoading}
           maxLength={length}
@@ -174,6 +174,7 @@ export const OTPInput = forwardRef<HTMLInputElement, CodeInputProps>(
                 {slots.map(slot => (
                   <Slot
                     {...slot}
+                    key={uuidv4()}
                     isActive={slot.isActive || isFull}
                     isLoading={isLoading}
                     secure={secure}

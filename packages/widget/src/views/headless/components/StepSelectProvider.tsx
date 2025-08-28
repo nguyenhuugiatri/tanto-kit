@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -8,7 +8,7 @@ import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
 import { Countdown } from '../../../components/countdown/Countdown';
 import { Input } from '../../../components/input/Input';
-import { TRANSITION_DURATION } from '../../../constants';
+import { useDelayFocus } from '../../../hooks/useDelayFocus';
 import { SocialButtons } from './SocialButtons';
 
 const emailSchema = z.object({
@@ -54,12 +54,7 @@ export function StepSelectProvider({
 
   const emailValue = watch('email');
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      inputRef.current?.focus();
-    }, TRANSITION_DURATION * 1.5);
-    return () => clearTimeout(timeout);
-  }, []);
+  useDelayFocus(inputRef);
 
   const canSubmitEmail = emailValue && isValid && !isEmailSubmitting;
 

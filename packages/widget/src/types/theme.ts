@@ -102,6 +102,11 @@ export interface TantoWidgetThemeTokens {
   checkboxHoverBackground: string;
   checkboxCheckedBackground: string;
   checkboxCheckedHoverBackground: string;
+
+  /* Social Icons */
+  appleIcon: string;
+  facebookIcon: string;
+  googleIcon: string;
 }
 
 export type TantoWidgetTheme = TantoWidgetThemeMode | TantoWidgetThemeTokens;

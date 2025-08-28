@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallbackRef } from '@radix-ui/react-use-callback-ref';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import z from 'zod';
 
@@ -12,6 +12,7 @@ import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
 import { DotLoading } from '../../../components/dot-loading/DotLoading';
 import { PasswordInput } from '../../../components/password-input/PasswordInput';
+import { useDelayFocus } from '../../../hooks/useDelayFocus';
 import { mutation, query } from '../../../services/queries';
 
 interface StepUpgradeToPasswordless {
@@ -59,6 +60,7 @@ enum Step {
 }
 
 export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }: StepUpgradeToPasswordless) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(Step.REQUEST_PASSWORD);
   const [error, setError] = useState<string | null>(null);
   const { data: encryptedClientShard, isPending: isPendingEncryptedClientShard } = useQuery(
@@ -95,6 +97,8 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
     }
   });
 
+  useDelayFocus(inputRef);
+
   return (
     <TransitionedView viewKey={step}>
       {step === Step.REQUEST_PASSWORD && (
@@ -109,7 +113,7 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
               control={control}
               render={({ field }) => (
                 <PasswordInput
-                  autoFocus
+                  ref={inputRef}
                   placeholder="Recovery password"
                   readOnly={isPending}
                   error={errors.password?.message || error}

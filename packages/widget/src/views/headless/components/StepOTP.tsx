@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Box } from '../../../components/box/Box';
 import { OTPInput } from '../../../components/otp-input/OTPInput';
+import { useDelayFocus } from '../../../hooks/useDelayFocus';
 import { ResendEmail } from './ResendEmail';
 
 interface StepOTPProps {
@@ -45,7 +46,7 @@ export function StepOTP({
   isSuccess = false,
 }: StepOTPProps) {
   const [otp, setOTP] = useState('');
-  const ref = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onComplete = async (code: string) => {
     try {
@@ -63,11 +64,14 @@ export function StepOTP({
   const handleResend = () => {
     setOTP('');
     onResend();
+    inputRef.current?.focus();
   };
 
   useEffect(() => {
-    if (otp === '' || !!error) ref.current?.focus();
-  }, [otp, error]);
+    if (!!error) inputRef.current?.focus();
+  }, [error]);
+
+  useDelayFocus(inputRef);
 
   return (
     <Box fullWidth vertical align="center" gap={48}>
@@ -78,7 +82,7 @@ export function StepOTP({
         </Description>
       </Box>
       <OTPInput
-        ref={ref}
+        ref={inputRef}
         value={otp}
         length={6}
         onChange={handleOTPChange}

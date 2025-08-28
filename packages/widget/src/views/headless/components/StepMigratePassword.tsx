@@ -1,14 +1,14 @@
 import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { composeRefs } from '@radix-ui/react-compose-refs';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Box } from '../../../components/box/Box';
 import { Button } from '../../../components/button/Button';
 import { Input } from '../../../components/input/Input';
-import { TRANSITION_DURATION } from '../../../constants';
+import { useDelayFocus } from '../../../hooks/useDelayFocus';
 
 const passwordLessSchema = z.object({
   password: z.string().min(1, 'Password is required'),
@@ -58,12 +58,7 @@ export function StepMigratePassword({ onSubmit }: StepMigratePasswordProps) {
     },
   });
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      inputRef.current?.focus();
-    }, TRANSITION_DURATION * 1.5);
-    return () => clearTimeout(timeout);
-  }, []);
+  useDelayFocus(inputRef);
 
   return (
     <Box fullWidth vertical align="center" gap={48}>
