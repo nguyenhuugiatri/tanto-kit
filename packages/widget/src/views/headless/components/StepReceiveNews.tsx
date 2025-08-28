@@ -21,18 +21,18 @@ const StyledDescription = styled.div(({ theme }) => ({
   marginBottom: 38,
 }));
 
-interface StepSuccessNewUserProps {
+interface StepReceiveNewsProps {
   checked: boolean;
   setChecked: (checked: boolean) => void;
-  onContinue: () => void;
+  onComplete: () => void;
 }
 
-export function StepSuccessNewUser({ checked, setChecked, onContinue }: StepSuccessNewUserProps) {
+export function StepReceiveNews({ checked, setChecked, onComplete }: StepReceiveNewsProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleContinue = useCallbackRef(() => {
     setIsLoading(true);
-    onContinue();
+    onComplete();
   });
 
   return (

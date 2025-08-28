@@ -1,6 +1,8 @@
 import styled from '@emotion/styled';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef } from 'react';
+import { useCallbackRef } from '@radix-ui/react-use-callback-ref';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -9,6 +11,10 @@ import { Button } from '../../../components/button/Button';
 import { Countdown } from '../../../components/countdown/Countdown';
 import { Input } from '../../../components/input/Input';
 import { useDelayFocus } from '../../../hooks/useDelayFocus';
+import { HttpError } from '../../../services/api/HttpClient';
+import { mutation } from '../../../services/queries';
+import { PreferredMethod } from '../../../types/wallet';
+import { getSecondsFromMessage } from '../../../utils/string';
 import { SocialButtons } from './SocialButtons';
 
 const emailSchema = z.object({
@@ -18,11 +24,9 @@ const emailSchema = z.object({
 type EmailFormData = z.infer<typeof emailSchema>;
 
 interface StepSelectProviderProps {
-  isEmailSubmitting?: boolean;
-  retryCountdownSeconds?: number;
-  onEmailChange: (email: string) => void;
-  onEmailSubmit: (data: EmailFormData) => void;
-  onSocialSignInSuccess: () => void;
+  onSendEmailSuccess: (email: string) => void;
+  onAuthSocialSuccess: (preferMethod: PreferredMethod) => void;
+  onAuthSocialError: (error: HttpError) => void;
 }
 
 const Form = styled.form({
@@ -34,33 +38,55 @@ const Form = styled.form({
 });
 
 export function StepSelectProvider({
-  isEmailSubmitting = false,
-  retryCountdownSeconds = 0,
-  onEmailChange,
-  onEmailSubmit,
-  onSocialSignInSuccess,
+  onSendEmailSuccess,
+  onAuthSocialSuccess,
+  onAuthSocialError,
 }: StepSelectProviderProps) {
+  const [retryWaitSeconds, setRetryWaitSeconds] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid: isFormValid },
     watch,
   } = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
     mode: 'onSubmit',
+    defaultValues: { email: '' },
   });
 
   const emailValue = watch('email');
 
+  const initOTPPasswordlessMutation = useMutation({
+    ...mutation.initOTPPasswordless(),
+    onSuccess: () => {
+      setRetryWaitSeconds(0);
+    },
+    onError: (error: Error) => setRetryWaitSeconds(getSecondsFromMessage(error.message)),
+  });
+
   useDelayFocus(inputRef);
 
-  const canSubmitEmail = emailValue && isValid && !isEmailSubmitting;
+  const canSubmitEmail = isFormValid && !initOTPPasswordlessMutation.isPending;
+
+  const handleEmailSubmit = useCallbackRef(async ({ email }: EmailFormData) => {
+    try {
+      await initOTPPasswordlessMutation.mutateAsync({ email });
+      onSendEmailSuccess(email);
+    } catch (error) {
+      console.debug('Failed to send OTP:', error);
+    }
+  });
+
+  useEffect(() => {
+    initOTPPasswordlessMutation.reset();
+    setRetryWaitSeconds(0);
+  }, [emailValue]);
 
   return (
     <Box vertical gap={16}>
-      <Form onSubmit={handleSubmit(onEmailSubmit)}>
+      <Form onSubmit={handleSubmit(handleEmailSubmit)}>
         <Controller
           name="email"
           control={control}
@@ -68,18 +94,15 @@ export function StepSelectProvider({
             <Input
               placeholder="your@gmail.com"
               ref={inputRef}
-              readOnly={isEmailSubmitting}
+              readOnly={initOTPPasswordlessMutation.isPending}
               error={errors.email?.message}
               value={field.value}
-              onChange={email => {
-                field.onChange(email);
-                onEmailChange(email);
-              }}
+              onChange={field.onChange}
             />
           )}
         />
 
-        <Countdown pendingTime={retryCountdownSeconds}>
+        <Countdown pendingTime={retryWaitSeconds}>
           {({ count }) => {
             const isCountingDown = count > 0;
 
@@ -92,7 +115,12 @@ export function StepSelectProvider({
             }
 
             return (
-              <Button fullWidth disabled={!canSubmitEmail} loading={isEmailSubmitting} type="submit">
+              <Button
+                fullWidth
+                disabled={!canSubmitEmail}
+                loading={initOTPPasswordlessMutation.isPending}
+                type="submit"
+              >
                 Continue
               </Button>
             );
@@ -100,7 +128,7 @@ export function StepSelectProvider({
         </Countdown>
       </Form>
 
-      <SocialButtons onSuccess={onSocialSignInSuccess} />
+      <SocialButtons onSuccess={onAuthSocialSuccess} onError={onAuthSocialError} />
     </Box>
   );
 }

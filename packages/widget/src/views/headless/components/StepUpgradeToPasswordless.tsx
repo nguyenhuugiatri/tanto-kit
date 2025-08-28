@@ -15,7 +15,7 @@ import { PasswordInput } from '../../../components/password-input/PasswordInput'
 import { useDelayFocus } from '../../../hooks/useDelayFocus';
 import { mutation, query } from '../../../services/queries';
 
-interface StepUpgradeToPasswordless {
+interface StepUpgradeToPasswordlessProps {
   onUpgradeSuccess: () => void;
   onCancelUpgrade: () => void;
 }
@@ -51,7 +51,6 @@ const ActionButton = styled.span(({ theme }) => ({
 const passwordSchema = z.object({
   password: z.string().min(1, 'Please enter your recovery password.'),
 });
-
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 enum Step {
@@ -59,39 +58,48 @@ enum Step {
   UPGRADE = 2,
 }
 
-export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }: StepUpgradeToPasswordless) {
+export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }: StepUpgradeToPasswordlessProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(Step.REQUEST_PASSWORD);
   const [error, setError] = useState<string | null>(null);
-  const { data: encryptedClientShard, isPending: isPendingEncryptedClientShard } = useQuery(
-    query.encryptedClientShard(),
-  );
-  const { mutateAsync: decryptClientShard, isPending: isPendingDecryptClientShard } = useMutation(
-    mutation.decryptClientShard(),
-  );
-  const { mutateAsync: migrateToPasswordless } = useMutation(mutation.migrateToPasswordless());
 
-  const isPending = isPendingEncryptedClientShard || isPendingDecryptClientShard;
+  const encryptedClientShardQuery = useQuery(query.encryptedClientShard());
+  const decryptClientShardMutation = useMutation(mutation.decryptClientShard());
+  const migrateToPasswordlessMutation = useMutation(mutation.migrateToPasswordless());
+  const getUserProfileMutation = useMutation(mutation.getUserProfile());
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid: isFormValid },
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
     mode: 'onSubmit',
+    defaultValues: { password: '' },
   });
+
+  const isLoadingDecrypt = decryptClientShardMutation.isPending;
+  const isDisableButton = !isFormValid || encryptedClientShardQuery.isPending || isLoadingDecrypt;
+
+  const errorMessage = errors.password?.message || error;
 
   const onSubmit = useCallbackRef(async ({ password }: PasswordFormData) => {
     try {
-      if (!encryptedClientShard) return;
-      const clientShard = await decryptClientShard({
-        encryptedClientShard: encryptedClientShard.data.key,
+      if (!encryptedClientShardQuery.data) return;
+
+      const clientShard = await decryptClientShardMutation.mutateAsync({
+        encryptedClientShard: encryptedClientShardQuery.data.data.key,
         recoveryPassword: password,
       });
+
       setStep(Step.UPGRADE);
-      await migrateToPasswordless({ clientShard });
-      onUpgradeSuccess();
+
+      await migrateToPasswordlessMutation.mutateAsync({ clientShard });
+      const { preferMethod } = await getUserProfileMutation.mutateAsync();
+
+      if (preferMethod === 'passwordless') {
+        onUpgradeSuccess();
+      }
     } catch {
       setError('Invalid recovery password.');
     }
@@ -107,6 +115,7 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
             <Title>Upgrade your account</Title>
             <Description>Enter your recovery password to unlock a smoother and more secure experience.</Description>
           </Box>
+
           <Form onSubmit={handleSubmit(onSubmit)}>
             <Controller
               name="password"
@@ -115,17 +124,18 @@ export function StepUpgradeToPasswordless({ onUpgradeSuccess, onCancelUpgrade }:
                 <PasswordInput
                   ref={inputRef}
                   placeholder="Recovery password"
-                  readOnly={isPending}
-                  error={errors.password?.message || error}
+                  readOnly={isLoadingDecrypt}
+                  error={errorMessage}
                   value={field.value}
-                  onChange={password => {
+                  onChange={value => {
                     setError(null);
-                    field.onChange(password);
+                    field.onChange(value);
                   }}
                 />
               )}
             />
-            <Button fullWidth disabled={!isValid} loading={isPending} type="submit">
+
+            <Button fullWidth disabled={isDisableButton} loading={isLoadingDecrypt} type="submit">
               Start upgrade
             </Button>
 

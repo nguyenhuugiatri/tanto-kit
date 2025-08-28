@@ -1,5 +1,6 @@
 import type { Address, Hex } from 'viem';
 
+import type { PreferredMethod } from '../../types/wallet';
 import { HeadlessConfig } from '../HeadlessConfig';
 import { SessionRepository } from '../SessionRepository';
 import { HttpClient } from './HttpClient';
@@ -8,7 +9,7 @@ export interface UserProfileResponse {
   uuid: string;
   address: Address;
   hasSupportPwdless: boolean;
-  preferMethod: 'recovery_password' | 'passwordless';
+  preferMethod: PreferredMethod;
 }
 
 export interface SendTransactionRequest {

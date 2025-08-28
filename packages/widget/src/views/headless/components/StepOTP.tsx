@@ -1,20 +1,23 @@
 import styled from '@emotion/styled';
+import { useCallbackRef } from '@radix-ui/react-use-callback-ref';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
 import { Box } from '../../../components/box/Box';
 import { OTPInput } from '../../../components/otp-input/OTPInput';
 import { useDelayFocus } from '../../../hooks/useDelayFocus';
+import { HttpError } from '../../../services/api/HttpClient';
+import { mutation } from '../../../services/queries';
+import { PreferredMethod } from '../../../types/wallet';
 import { ResendEmail } from './ResendEmail';
+
+const MAX_OTP_LENGTH = 6;
 
 interface StepOTPProps {
   email: string;
-  error?: string;
-  isLoading?: boolean;
   clearOnError?: boolean;
-  onOTPChange: (code: string) => void;
-  onOTPSubmit: (code: string) => Promise<void>;
-  onResend: () => void;
-  isSuccess?: boolean;
+  onOTPSuccess: (preferMethod: PreferredMethod) => void;
+  onOTPError: (error: HttpError) => void;
 }
 
 const Title = styled.h1({
@@ -35,41 +38,50 @@ const EmailHighlight = styled.span(({ theme }) => ({
   color: theme.bodyText,
 }));
 
-export function StepOTP({
-  email,
-  error,
-  onOTPChange,
-  onOTPSubmit,
-  onResend,
-  isLoading = false,
-  clearOnError = true,
-  isSuccess = false,
-}: StepOTPProps) {
+export function StepOTP({ email, clearOnError = false, onOTPSuccess, onOTPError }: StepOTPProps) {
   const [otp, setOTP] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const onComplete = async (code: string) => {
+  const authenticateOTPMutation = useMutation(mutation.authenticateWithOTP());
+  const getUserProfileMutation = useMutation(mutation.getUserProfile());
+  const initOTPPasswordlessMutation = useMutation(mutation.initOTPPasswordless());
+
+  const handleOTPSubmit = useCallbackRef(async (code: string) => {
     try {
-      await onOTPSubmit(code);
-    } catch {
+      await authenticateOTPMutation.mutateAsync({ email, otp: code });
+      const { preferMethod } = await getUserProfileMutation.mutateAsync();
+      onOTPSuccess(preferMethod);
+    } catch (error) {
+      if (error instanceof HttpError) {
+        onOTPError(error);
+        return;
+      }
       if (clearOnError) setOTP('');
     }
-  };
+  });
 
-  const handleOTPChange = (code: string) => {
-    setOTP(code);
-    onOTPChange(code);
-  };
+  const handleOTPChange = useCallbackRef((code: string) => {
+    setOTP(prevCode => {
+      if (code.length !== prevCode.length) {
+        authenticateOTPMutation.reset();
+        return code;
+      }
+      if (prevCode.length === MAX_OTP_LENGTH) return prevCode;
+      authenticateOTPMutation.reset();
+      return code;
+    });
+  });
 
-  const handleResend = () => {
+  const handleResend = useCallbackRef(() => {
     setOTP('');
-    onResend();
+    authenticateOTPMutation.reset();
+    initOTPPasswordlessMutation.mutate({ email });
     inputRef.current?.focus();
-  };
+  });
 
   useEffect(() => {
-    if (!!error) inputRef.current?.focus();
-  }, [error]);
+    if (authenticateOTPMutation.error?.message) inputRef.current?.focus();
+  }, [authenticateOTPMutation.error?.message]);
 
   useDelayFocus(inputRef);
 
@@ -81,16 +93,18 @@ export function StepOTP({
           Please check <EmailHighlight>{email}</EmailHighlight> and enter the code below.
         </Description>
       </Box>
+
       <OTPInput
         ref={inputRef}
         value={otp}
-        length={6}
+        length={MAX_OTP_LENGTH}
         onChange={handleOTPChange}
-        onComplete={onComplete}
-        isLoading={isLoading}
-        isSuccess={isSuccess}
-        error={error}
+        onComplete={handleOTPSubmit}
+        isLoading={authenticateOTPMutation.isPending || getUserProfileMutation.isPending}
+        isSuccess={authenticateOTPMutation.isSuccess}
+        error={authenticateOTPMutation.error?.message}
       />
+
       <ResendEmail onResend={handleResend} />
     </Box>
   );

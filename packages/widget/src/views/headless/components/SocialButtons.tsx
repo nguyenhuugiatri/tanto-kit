@@ -8,14 +8,17 @@ import { Button } from '../../../components/button/Button';
 import { DashedDivider } from '../../../components/dashed-divider/DashedDivider';
 import { Spinner } from '../../../components/spinner/Spinner';
 import { useTantoConfig } from '../../../contexts/tanto/useTantoConfig';
+import { HttpError } from '../../../services/api/HttpClient';
 import { mutation } from '../../../services/queries';
 import { SOCIAL_PROVIDERS, SocialProvider } from '../../../types/social';
+import { PreferredMethod } from '../../../types/wallet';
 import { isClient } from '../../../utils/common';
 
 const WAYPOINT_BASE_URL = 'https://id.skymavis.one';
 
 interface SocialButtonsProps {
-  onSuccess: () => void;
+  onSuccess: (preferMethod: PreferredMethod) => void;
+  onError: (error: HttpError) => void;
 }
 
 interface SocialSignInResponse {
@@ -24,7 +27,7 @@ interface SocialSignInResponse {
   secondary_address: string;
 }
 
-export function SocialButtons({ onSuccess }: SocialButtonsProps) {
+export function SocialButtons({ onSuccess, onError }: SocialButtonsProps) {
   const { clientId, excludedSocialProviders } = useTantoConfig();
   const [selectedProvider, setSelectedProvider] = useState<SocialProvider | null>(null);
 
@@ -42,6 +45,7 @@ export function SocialButtons({ onSuccess }: SocialButtonsProps) {
   );
 
   const exchangeTokenMutation = useMutation(mutation.exchangeToken());
+  const getUserProfileMutation = useMutation(mutation.getUserProfile());
 
   const authorizeWithSocialMutation = useMutation({
     mutationKey: ['tantoAuthorizeWithSocial'],
@@ -59,10 +63,12 @@ export function SocialButtons({ onSuccess }: SocialButtonsProps) {
       setSelectedProvider(provider);
       const { id_token: idToken } = await authorizeWithSocialMutation.mutateAsync(provider);
       await exchangeTokenMutation.mutateAsync({ idToken });
-      onSuccess();
+      const { preferMethod } = await getUserProfileMutation.mutateAsync();
+      onSuccess(preferMethod);
     } catch (error) {
       console.debug(`${provider} sign-in failed:`, error);
       setSelectedProvider(null);
+      if (error instanceof HttpError) onError(error);
     }
   });
 

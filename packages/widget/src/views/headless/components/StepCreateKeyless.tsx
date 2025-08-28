@@ -1,12 +1,15 @@
 import styled from '@emotion/styled';
+import { useCallbackRef } from '@radix-ui/react-use-callback-ref';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { Hourglass } from '../../../assets/Hourglass';
 import { Box } from '../../../components/box/Box';
 import { DotLoading } from '../../../components/dot-loading/DotLoading';
+import { mutation } from '../../../services/queries';
 
-interface StepCreatingKeylessProps {
-  handleCreateKeylessWallet: () => void;
+interface StepCreateKeylessProps {
+  onCreateKeylessSuccess: () => void;
 }
 
 const StyledHourglass = styled(Hourglass)({
@@ -28,8 +31,22 @@ const Description = styled.p(({ theme }) => ({
   textAlign: 'center',
 }));
 
-export function StepCreatingKeyless({ handleCreateKeylessWallet }: StepCreatingKeylessProps) {
+export function StepCreateKeyless({ onCreateKeylessSuccess }: StepCreateKeylessProps) {
   const calledRef = useRef(false);
+
+  const createKeylessWalletMutation = useMutation(mutation.createKeylessWallet());
+  const getUserProfileMutation = useMutation(mutation.getUserProfile());
+
+  const handleCreateKeylessWallet = useCallbackRef(async () => {
+    try {
+      await createKeylessWalletMutation.mutateAsync();
+      await getUserProfileMutation.mutateAsync();
+
+      onCreateKeylessSuccess();
+    } catch (error) {
+      console.debug('Failed to create keyless wallet:', error);
+    }
+  });
 
   useEffect(() => {
     if (calledRef.current) return;
