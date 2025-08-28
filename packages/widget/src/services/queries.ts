@@ -11,11 +11,6 @@ export const query = {
     queryOptions({
       queryKey: ['tantoGetEncryptedClientShard'],
       queryFn: walletApi.getEncryptedClientShard,
-      staleTime: Infinity,
-      gcTime: Infinity,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
     }),
 } as const;
 
