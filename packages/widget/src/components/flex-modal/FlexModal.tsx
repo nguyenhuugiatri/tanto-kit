@@ -125,16 +125,25 @@ function Close(props: DialogCloseProps) {
   return <CloseComponent {...props} />;
 }
 
+export type PointerDownOutsideEvent = CustomEvent<{
+  originalEvent: PointerEvent;
+}>;
+
+export type FocusOutsideEvent = CustomEvent<{
+  originalEvent: FocusEvent;
+}>;
+
 interface FlexModalProps {
   children: ReactNode;
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onAfterClose?: () => void;
+  onInteractOutside?: (event: PointerDownOutsideEvent | FocusOutsideEvent) => void;
 }
 
 export function FlexModal(props: FlexModalProps) {
-  const { children, defaultOpen, open, onOpenChange, onAfterClose } = props;
+  const { children, defaultOpen, open, onOpenChange, onAfterClose, onInteractOutside } = props;
   const isMobile = useIsMobileView();
 
   const contextValue = useMemo(
@@ -149,7 +158,7 @@ export function FlexModal(props: FlexModalProps) {
       <Root modal defaultOpen={defaultOpen} open={open} onOpenChange={onOpenChange}>
         <Portal>
           <Overlay />
-          <Content forceMount onCloseAutoFocus={onAfterClose}>
+          <Content forceMount onCloseAutoFocus={onAfterClose} onInteractOutside={onInteractOutside}>
             <VisuallyHidden>
               <Title />
             </VisuallyHidden>

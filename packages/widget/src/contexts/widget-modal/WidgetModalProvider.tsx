@@ -2,24 +2,48 @@ import type { PropsWithChildren } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { ConfirmationModal } from '../../ConfirmationModal';
+import { FundModal } from '../../FundModal';
 import { WidgetModal } from '../../WidgetModal';
 import type { WidgetModalState } from './WidgetModalContext';
 import { WidgetModalContext } from './WidgetModalContext';
 
-export function WidgetModalProvider({ children }: PropsWithChildren) {
+function useModalStateValue() {
   const [open, setOpen] = useState(false);
 
-  const show = useCallback(() => setOpen(true), []);
-  const hide = useCallback(() => setOpen(false), []);
+  return {
+    open,
+    setOpen,
+    showModal: useCallback(() => setOpen(true), []),
+    hideModal: useCallback(() => setOpen(false), []),
+  };
+}
+
+export function WidgetModalProvider({ children }: PropsWithChildren) {
+  const {
+    open: connectModalOpen,
+    setOpen: setConnectModalOpen,
+    showModal: showConnectModal,
+    hideModal: hideConnectModal,
+  } = useModalStateValue();
+  const {
+    open: fundModalOpen,
+    setOpen: setFundModalOpen,
+    showModal: showFundModal,
+    hideModal: hideFundModal,
+  } = useModalStateValue();
 
   const contextValue = useMemo<WidgetModalState>(
     () => ({
-      open,
-      setOpen,
-      show,
-      hide,
+      connectModalOpen,
+      showConnectModal,
+      hideConnectModal,
+      setConnectModalOpen,
+      fundModalOpen,
+      showFundModal,
+      hideFundModal,
+      setFundModalOpen,
     }),
-    [open, show, hide],
+    [connectModalOpen, showConnectModal, hideConnectModal, fundModalOpen, showFundModal, hideFundModal],
   );
 
   return (
@@ -27,6 +51,7 @@ export function WidgetModalProvider({ children }: PropsWithChildren) {
       {children}
       <WidgetModal />
       <ConfirmationModal />
+      <FundModal />
     </WidgetModalContext.Provider>
   );
 }

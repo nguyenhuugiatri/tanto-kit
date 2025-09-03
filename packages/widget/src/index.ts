@@ -5,7 +5,7 @@ export type { TantoProviderProps } from './contexts/tanto/TantoProvider';
 export { TantoProvider } from './contexts/tanto/TantoProvider';
 export { darkTheme } from './contexts/theme/darkTheme';
 export { lightTheme } from './contexts/theme/lightTheme';
-export { useWidgetModal as useTantoModal } from './contexts/widget-modal/useWidgetModal';
+export { useConnectModal as useTantoModal } from './contexts/widget-modal/useWidgetModal';
 export type { TantoEmbeddedWidgetProps } from './EmbeddedWidget';
 export { TantoEmbeddedWidget } from './EmbeddedWidget';
 export type { AppMetadata, DefaultConfig, KeylessWalletConfig } from './getDefaultConfig';

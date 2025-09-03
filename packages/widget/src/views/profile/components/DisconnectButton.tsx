@@ -12,7 +12,7 @@ export function DisconnectButton() {
   const widgetModalContext = useContext(WidgetModalContext);
 
   const handleDisconnect = useCallback(() => {
-    if (widgetModalContext) widgetModalContext.hide();
+    if (widgetModalContext) widgetModalContext.hideConnectModal();
     setTimeout(disconnect, isMobile ? DRAWER_VISIBILITY_TRANSITION_DURATION : DIALOG_VISIBILITY_TRANSITION_DURATION);
   }, [widgetModalContext, disconnect]);
 

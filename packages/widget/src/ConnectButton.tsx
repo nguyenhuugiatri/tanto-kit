@@ -7,7 +7,7 @@ import { Box } from './components/box/Box';
 import { Button } from './components/button/Button';
 import { CSSReset } from './components/css-reset/CSSReset';
 import { useTantoConfig } from './contexts/tanto/useTantoConfig';
-import { useWidgetModal } from './contexts/widget-modal/useWidgetModal';
+import { useConnectModal } from './contexts/widget-modal/useWidgetModal';
 import { useAccount } from './hooks/useAccount';
 import { useConnectCallback } from './hooks/useConnectCallback';
 import { useRnsName } from './hooks/useRnsName';
@@ -38,7 +38,7 @@ export function TantoConnectButton({
 }: TantoConnectButtonProps) {
   const { disableProfile } = useTantoConfig();
   const { address, chainId, isConnected } = useAccount();
-  const { open, show, hide } = useWidgetModal();
+  const { connectModalOpen, showConnectModal, hideConnectModal } = useConnectModal();
   const { data: rns, isSuccess: isRnsSuccess } = useRnsName({ address });
   const normalizedAddress = address?.toLowerCase();
 
@@ -56,13 +56,13 @@ export function TantoConnectButton({
             chainId,
             rns,
             address: normalizedAddress,
-            modalOpen: open,
-            showModal: show,
-            hideModal: hide,
+            modalOpen: connectModalOpen,
+            showModal: showConnectModal,
+            hideModal: hideConnectModal,
           })}
         </SmoothWidth>
       ) : (
-        <Button intent={isConnected ? 'secondary' : 'primary'} onClick={show}>
+        <Button intent={isConnected ? 'secondary' : 'primary'} onClick={showConnectModal}>
           <SmoothWidth css={{ minWidth: 120, whiteSpace: 'nowrap', display: 'flex', justifyContent: 'center' }}>
             <TransitionedView viewKey={isConnected && isRnsSuccess}>
               {isConnected && !disableProfile ? (
