@@ -16,7 +16,9 @@ import { ErrorCode } from './api/errorCode';
 import { HttpError } from './api/HttpClient';
 import { WalletApi } from './api/WalletApi';
 import { HeadlessConfig } from './HeadlessConfig';
-import { AESEncrypt, deriveKey, getV1PackedContent, unpackEncryptedContent } from './helpers/crypto';
+import { encryptWithAES } from './helpers/crypto/aes';
+import { extractV1Content, parsePackedCipher } from './helpers/crypto/cipherUtils';
+import { deriveRecoveryKey } from './helpers/crypto/keyDerivation';
 import { toTransactionInServerFormat } from './helpers/prepareTransaction';
 import { TransactionParams } from './helpers/types';
 import { SessionRepository } from './SessionRepository';
@@ -78,24 +80,24 @@ export class WalletService {
     recoveryPassword: string;
   }) => {
     try {
-      const v1PackedContent = getV1PackedContent(encryptedClientShard);
-      const { authTag, cipherText, iv } = unpackEncryptedContent(v1PackedContent);
+      const v1Content = extractV1Content(encryptedClientShard);
+      const { authTag, cipherText, iv } = parsePackedCipher(v1Content);
 
       const accessToken = await this.sessionRepository.getAccessToken();
       if (!accessToken) throw new Error('No access token found.');
 
-      const key = await deriveKey(accessToken, recoveryPassword);
+      const derivedAESKey = await deriveRecoveryKey(accessToken, recoveryPassword);
 
       // Better UX
       await delay(500);
 
-      const shardInBytes = await crypto.subtle.decrypt(
+      const decryptedBytes = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv },
-        key,
+        derivedAESKey,
         concatBytes([cipherText, authTag]),
       );
 
-      const base64Shard = bytesToString(new Uint8Array(shardInBytes));
+      const base64Shard = bytesToString(new Uint8Array(decryptedBytes));
 
       return base64Shard;
     } catch (error) {
@@ -106,10 +108,7 @@ export class WalletService {
   migrateToPasswordless = async ({ clientShard }: { clientShard: string }) => {
     try {
       const exchangePublicKey = await this.getExchangePublicKey();
-      const { ciphertextB64, encryptedKeyB64, nonceB64 } = await AESEncrypt({
-        content: clientShard,
-        key: exchangePublicKey,
-      });
+      const { ciphertextB64, encryptedKeyB64, nonceB64 } = await encryptWithAES(clientShard, exchangePublicKey);
 
       await this.walletApi.migrateToPasswordless({
         shardCiphertextB64: ciphertextB64,
